@@ -1,0 +1,6 @@
+{
+  "name": "MapolyCBE - Computer-Based Examination System",
+  "description": "Real-time Computer-Based Examination (CBE) platform for Moshood Abiola Polytechnic with instant background answer sync, anti-tamper checksum integrity verification, countdown timers, candidate analytics, and administrator security monitoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
