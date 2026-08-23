@@ -37,14 +37,14 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-stone-900 tracking-tight leading-[1.15] mb-6">
-            Institutional Testing with{' '}
+            Moshood Abiola Polytechnic{' '}
             <span className="text-emerald-800 underline decoration-emerald-300 decoration-wavy decoration-2">
-              Cryptographic Integrity
+              Secure CBE Portal
             </span>
           </h1>
 
           <p className="text-base sm:text-lg text-stone-600 leading-relaxed mb-10 max-w-2xl mx-auto font-normal">
-            Moshood Abiola Polytechnic authoritative assessment delivery system featuring sub-second answer synchronization, SHA-256 tamper-evident verification, and live security audits.
+            Moshood Abiola Polytechnic CBE delivery system featuring sub-second answer synchronization, SHA-256 tamper-evident verification, and live security audits.
           </p>
 
           {/* Quick Start Buttons */}
