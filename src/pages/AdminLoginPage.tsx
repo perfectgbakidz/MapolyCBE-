@@ -21,8 +21,8 @@ export const AdminLoginPage: React.FC = () => {
   const { loginAdmin } = useAuth();
   const { success } = useToast();
 
-  const [username, setUsername] = useState('admin@mapoly.edu.ng');
-  const [password, setPassword] = useState('Admin@2026!');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lockoutSeconds, setLockoutSeconds] = useState<number>(0);
@@ -187,29 +187,6 @@ export const AdminLoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick 1-Click Demo Credentials */}
-          <div className="mt-5 pt-4 border-t border-stone-200">
-            <button
-              type="button"
-              id="btn_autofill_admin_demo"
-              disabled={isLocked}
-              onClick={() => {
-                setUsername('admin@mapoly.edu.ng');
-                setPassword('Admin@2026!');
-                setFormError(null);
-              }}
-              className="w-full p-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 text-left transition flex items-center justify-between disabled:opacity-50"
-            >
-              <div>
-                <span className="text-xs font-bold text-stone-900 block">Prof. Evelyn Vance (Chief Examiner)</span>
-                <span className="text-[10px] text-emerald-800 block font-mono font-semibold">admin@mapoly.edu.ng</span>
-              </div>
-              <span className="px-2 py-1 rounded bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-300">
-                1-Click Demo
-              </span>
-            </button>
-          </div>
 
           {/* Return to Candidate link */}
           <div className="mt-5 text-center">

@@ -26,11 +26,10 @@ export const IntegrityCheckPanel: React.FC<IntegrityCheckPanelProps> = ({ onLogG
   const { success, error, warning } = useToast();
   const [isRunningAudit, setIsRunningAudit] = useState<boolean>(false);
   const [auditResult, setAuditResult] = useState<IntegrityCheckResult | null>(null);
-  const [isSimulating, setIsSimulating] = useState<boolean>(false);
 
-  // Manual Response or Result ID Verification Tool (Section 3.13)
+  // Manual Response or Result ID Verification Tool
   const [targetType, setTargetType] = useState<'response' | 'result'>('response');
-  const [verifyIdInput, setVerifyIdInput] = useState<string>('q_csc_401_01');
+  const [verifyIdInput, setVerifyIdInput] = useState<string>('');
   const [isVerifyingSingle, setIsVerifyingSingle] = useState<boolean>(false);
   const [singleVerification, setSingleVerification] = useState<SingleIntegrityVerification | null>(null);
 
@@ -76,22 +75,6 @@ export const IntegrityCheckPanel: React.FC<IntegrityCheckPanelProps> = ({ onLogG
       error('Verification Error', 'Failed to verify payload integrity hash.');
     } finally {
       setIsVerifyingSingle(false);
-    }
-  };
-
-  const handleSimulateAttack = async (
-    type: 'RATE_LIMIT' | 'CHECKSUM_TAMPER' | 'TAB_SWITCH_BURST' | 'BRUTE_FORCE'
-  ) => {
-    setIsSimulating(true);
-    try {
-      const evt = await apiClient.triggerSimulatedAttack(type);
-      warning(
-        `Security Trigger Intercepted: ${evt.eventType}`,
-        evt.details
-      );
-      onLogGenerated?.();
-    } finally {
-      setIsSimulating(false);
     }
   };
 
@@ -319,69 +302,6 @@ export const IntegrityCheckPanel: React.FC<IntegrityCheckPanelProps> = ({ onLogG
           </div>
         </div>
       )}
-
-      {/* Interactive Attack Simulator for Evaluators */}
-      <div className="pt-2">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-4 h-4 text-amber-600" />
-          <h4 className="text-xs font-bold uppercase tracking-wider text-stone-800">
-            Security Event Simulator (Live Testing Sandbox)
-          </h4>
-        </div>
-        <p className="text-xs text-stone-500 mb-3 font-medium">
-          Simulate attack scenarios to test real-time rate limiting, payload tamper detection, and candidate session monitoring in the event stream:
-        </p>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <button
-            type="button"
-            disabled={isSimulating}
-            onClick={() => handleSimulateAttack('RATE_LIMIT')}
-            className="p-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 hover:border-amber-400 text-left transition group shadow-xs"
-          >
-            <span className="text-xs font-bold text-stone-900 group-hover:text-amber-800 block">
-              1. Rate Limit Burst
-            </span>
-            <span className="text-[10px] text-stone-500 block mt-0.5">Dispatches 45 rapid HTTP requests</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={isSimulating}
-            onClick={() => handleSimulateAttack('CHECKSUM_TAMPER')}
-            className="p-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 hover:border-rose-400 text-left transition group shadow-xs"
-          >
-            <span className="text-xs font-bold text-stone-900 group-hover:text-rose-800 block">
-              2. Tampered Checksum
-            </span>
-            <span className="text-[10px] text-stone-500 block mt-0.5">Forges answer HMAC hash payload</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={isSimulating}
-            onClick={() => handleSimulateAttack('TAB_SWITCH_BURST')}
-            className="p-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 hover:border-amber-400 text-left transition group shadow-xs"
-          >
-            <span className="text-xs font-bold text-stone-900 group-hover:text-amber-800 block">
-              3. Window Switch Alert
-            </span>
-            <span className="text-[10px] text-stone-500 block mt-0.5">Triggers visibility loss during test</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={isSimulating}
-            onClick={() => handleSimulateAttack('BRUTE_FORCE')}
-            className="p-2.5 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 hover:border-rose-400 text-left transition group shadow-xs"
-          >
-            <span className="text-xs font-bold text-stone-900 group-hover:text-rose-800 block">
-              4. Admin Auth Attack
-            </span>
-            <span className="text-[10px] text-stone-500 block mt-0.5">Simulates repeated login failures</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

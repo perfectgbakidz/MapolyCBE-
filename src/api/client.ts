@@ -3,7 +3,8 @@
  * Moshood Abiola Polytechnic
  */
 
-export const BASE_URL: string = ((import.meta as any).env?.VITE_API_BASE_URL as string) || '';
+export const BASE_URL: string =
+  ((import.meta as any).env?.VITE_API_BASE_URL as string) || 'https://ceb-backend-chph.onrender.com';
 
 export interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';

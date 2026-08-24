@@ -21,8 +21,8 @@ export const CandidateLoginPage: React.FC = () => {
   const { loginCandidate } = useAuth();
   const { success } = useToast();
 
-  const [matricNo, setMatricNo] = useState('CBT/2026/CS/0492');
-  const [password, setPassword] = useState('Candidate@123!');
+  const [matricNo, setMatricNo] = useState('');
+  const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lockoutSeconds, setLockoutSeconds] = useState<number>(0);
@@ -79,12 +79,6 @@ export const CandidateLoginPage: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const setDemoAccount = (demoMatric: string) => {
-    setMatricNo(demoMatric);
-    setPassword('Candidate@123!');
-    setFormError(null);
   };
 
   const isLocked = lockoutSeconds > 0;
@@ -193,35 +187,6 @@ export const CandidateLoginPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Accounts */}
-          <div className="mt-5 pt-4 border-t border-stone-200">
-            <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-2 text-center">
-              Quick 1-Click Demo Accounts
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                id="btn_demo_candidate_1"
-                disabled={isLocked}
-                onClick={() => setDemoAccount('CBT/2026/CS/0492')}
-                className="p-2.5 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-200 text-left transition disabled:opacity-50"
-              >
-                <span className="text-xs font-bold text-stone-900 block truncate">Kosi Nwafor</span>
-                <span className="text-[10px] text-emerald-800 block font-mono font-semibold">CBT/2026/CS/0492</span>
-              </button>
-              <button
-                type="button"
-                id="btn_demo_candidate_2"
-                disabled={isLocked}
-                onClick={() => setDemoAccount('CBT/2026/CS/0511')}
-                className="p-2.5 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-200 text-left transition disabled:opacity-50"
-              >
-                <span className="text-xs font-bold text-stone-900 block truncate">Sarah Jenkins</span>
-                <span className="text-[10px] text-emerald-800 block font-mono font-semibold">CBT/2026/CS/0511</span>
-              </button>
-            </div>
-          </div>
 
           {/* Link: "New here? Create an account" */}
           <div className="mt-5 space-y-2 text-center">

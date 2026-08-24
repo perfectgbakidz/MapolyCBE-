@@ -272,7 +272,7 @@ export const AdminSecurityMonitoringPage: React.FC = () => {
             <div className="p-12 text-center text-stone-500">
               <ShieldCheck className="w-10 h-10 mx-auto mb-2 text-stone-400" />
               <p className="text-sm font-semibold text-stone-800">No security events found</p>
-              <p className="text-xs text-stone-500 mt-1">Try relaxing filters or trigger a simulated attack event above.</p>
+              <p className="text-xs text-stone-500 mt-1">Try relaxing filters or check back as live examination activity occurs.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -130,8 +130,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       full_name: fullName,
       email: data.email,
       password: data.password || 'Candidate@123!',
-      phone: data.phone,
-      department: data.department,
     });
     setCandidateUser(res.user);
     setCandidateToken(res.token);

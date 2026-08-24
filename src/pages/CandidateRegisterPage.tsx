@@ -13,7 +13,6 @@ import {
   Lock,
   Loader2,
   AlertCircle,
-  Sparkles,
 } from 'lucide-react';
 
 export const CandidateRegisterPage: React.FC = () => {
@@ -107,16 +106,6 @@ export const CandidateRegisterPage: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const autofillDemo = () => {
-    const randomDigits = Math.floor(1000 + Math.random() * 9000);
-    setMatricNo(`MAPOLY/2026/CS/${randomDigits}`);
-    setFullName('Chioma Adeleke');
-    setEmail(`chioma.${randomDigits}@mapoly.edu.ng`);
-    setPassword('Candidate@2026!');
-    setFieldErrors({});
-    setFormError(null);
   };
 
   return (
@@ -320,19 +309,6 @@ export const CandidateRegisterPage: React.FC = () => {
               )}
             </button>
           </form>
-
-          {/* 1-Click Demo autofill */}
-          <div className="mt-4 pt-4 border-t border-stone-200 text-center">
-            <button
-              type="button"
-              id="btn_autofill_candidate_demo"
-              onClick={autofillDemo}
-              className="inline-flex items-center gap-1.5 text-xs text-emerald-800 hover:text-emerald-900 font-bold py-1.5 px-3 rounded-lg bg-emerald-50 border border-emerald-300 transition"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              1-Click Demo Autofill
-            </button>
-          </div>
 
           {/* Link: "Already have an account? Log in" */}
           <div className="mt-4 text-center">

@@ -8,13 +8,11 @@ import {
   LogOut,
   LogIn,
   UserPlus,
-  ShieldAlert,
-  Wifi,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { currentPath, navigate } = useRouter();
-  const { candidateUser, candidateToken, logoutCandidate, adminToken } = useAuth();
+  const { candidateUser, candidateToken, logoutCandidate } = useAuth();
 
   const handleLogout = () => {
     logoutCandidate();
@@ -82,25 +80,6 @@ export const Navbar: React.FC = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-3">
-            {/* Live Sync Status indicator */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 border border-stone-250 text-xs text-stone-700">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-              <Wifi className="w-3.5 h-3.5 text-emerald-700" />
-              <span className="font-mono text-[11px] font-medium">Sync: Online</span>
-            </div>
-
-            {/* Admin Switcher shortcut */}
-            <button
-              type="button"
-              id="nav_switch_to_admin"
-              onClick={() => navigate(adminToken ? '/admin/dashboard' : '/admin/login')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 transition"
-              title="Switch to Administrator Security Portal"
-            >
-              <ShieldAlert className="w-3.5 h-3.5 text-emerald-800" />
-              <span>Admin Portal</span>
-            </button>
-
             {candidateToken && candidateUser ? (
               <div className="flex items-center gap-3 pl-2">
                 <div className="hidden sm:flex flex-col text-right">

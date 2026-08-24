@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Lock, Cpu, Clock } from 'lucide-react';
+import { ShieldCheck, Lock, Clock } from 'lucide-react';
 import { useRouter } from '../../context/RouterContext';
 
 export const Footer: React.FC = () => {
@@ -30,11 +30,6 @@ export const Footer: React.FC = () => {
             <Lock className="w-3.5 h-3.5 text-emerald-850" />
             <span>SHA-256 HMAC Sealed</span>
           </div>
-          <span className="hidden sm:inline text-stone-300">|</span>
-          <div className="flex items-center gap-1.5 text-stone-600 font-mono text-[11px]">
-            <Cpu className="w-3.5 h-3.5 text-emerald-800" />
-            <span>Sub-second Cloud Sync</span>
-          </div>
         </div>
 
         {/* Center/Right: Clock and Quick Navigation */}
@@ -60,15 +55,6 @@ export const Footer: React.FC = () => {
               className="text-stone-600 hover:text-stone-900 transition font-medium"
             >
               Candidate Login
-            </button>
-            <span className="text-stone-300">•</span>
-            <button
-              type="button"
-              id="footer_link_admin_login"
-              onClick={() => navigate('/admin/login')}
-              className="text-stone-600 hover:text-emerald-900 transition font-medium"
-            >
-              Admin Portal
             </button>
           </div>
         </div>
