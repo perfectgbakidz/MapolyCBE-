@@ -20,6 +20,7 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AdminCoursesPage } from './pages/AdminCoursesPage';
 import { AdminManageExamsPage } from './pages/AdminManageExamsPage';
 import { AdminManageQuestionsPage } from './pages/AdminManageQuestionsPage';
+import { AdminQuestionBankPage } from './pages/AdminQuestionBankPage';
 import { AdminSecurityMonitoringPage } from './pages/AdminSecurityMonitoringPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -127,11 +128,20 @@ const AppRoutes: React.FC = () => {
     );
   }
 
-  // 12. Admin Manage Questions
+  // 12. Admin Manage Questions (by exam route)
   if (matchRoute('/admin/exams/:examId/questions')) {
     return (
       <ProtectedRoute role="admin" redirectTo="/admin/login">
         <AdminManageQuestionsPage />
+      </ProtectedRoute>
+    );
+  }
+
+  // 12.1 Admin Question Bank & Creator Hub
+  if (currentPath === '/admin/questions' || matchRoute('/admin/questions/:examId')) {
+    return (
+      <ProtectedRoute role="admin" redirectTo="/admin/login">
+        <AdminQuestionBankPage />
       </ProtectedRoute>
     );
   }

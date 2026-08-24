@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   Activity,
   Plus,
+  HelpCircle,
   ArrowRight,
   TrendingUp,
   Radio,
@@ -74,14 +75,23 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
 
           {/* Quick Action Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              id="admin_dash_add_questions_btn"
+              onClick={() => navigate('/admin/questions')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition shadow-xs hover:scale-[1.01]"
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span>Exam Questions Bank</span>
+            </button>
             <button
               type="button"
               id="admin_dash_create_exam_btn"
               onClick={() => navigate('/admin/exams')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition shadow-xs"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold border border-stone-300 transition shadow-xs"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-emerald-800" />
               <span>Create / Manage Exams</span>
             </button>
             <button

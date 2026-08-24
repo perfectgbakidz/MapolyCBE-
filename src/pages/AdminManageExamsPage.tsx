@@ -97,18 +97,30 @@ export const AdminManageExamsPage: React.FC = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            id="admin_btn_new_exam"
-            onClick={() => {
-              setEditingExam(null);
-              setIsCreateModalOpen(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition shadow-xs hover:scale-[1.01]"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Examination</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              id="admin_btn_question_bank"
+              onClick={() => navigate('/admin/questions')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 text-xs font-bold transition shadow-xs hover:scale-[1.01]"
+            >
+              <HelpCircle className="w-4 h-4 text-emerald-800" />
+              <span>Questions Bank</span>
+            </button>
+
+            <button
+              type="button"
+              id="admin_btn_new_exam"
+              onClick={() => {
+                setEditingExam(null);
+                setIsCreateModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition shadow-xs hover:scale-[1.01]"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create New Examination</span>
+            </button>
+          </div>
         </div>
 
         {/* Search & Filter Bar */}
@@ -207,11 +219,12 @@ export const AdminManageExamsPage: React.FC = () => {
                           <button
                             type="button"
                             id={`btn_manage_questions_${exam.id}`}
-                            onClick={() => navigate(`/admin/exams/${exam.id}/questions`)}
-                            className="p-2 rounded-lg bg-stone-100 hover:bg-emerald-800 text-stone-700 hover:text-white transition border border-stone-200"
-                            title="Manage Questions Bank"
+                            onClick={() => navigate(`/admin/questions`)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-800 text-emerald-900 hover:text-white transition border border-emerald-300 text-xs font-bold"
+                            title="Manage & Add Questions"
                           >
-                            <HelpCircle className="w-4 h-4" />
+                            <HelpCircle className="w-3.5 h-3.5" />
+                            <span>Questions</span>
                           </button>
 
                           <button

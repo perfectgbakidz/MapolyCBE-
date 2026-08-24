@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Layers,
   GraduationCap,
+  HelpCircle,
   Activity,
   LogOut,
   UserCheck,
@@ -99,13 +100,27 @@ export const AdminNavbar: React.FC = () => {
                 id="admin_nav_link_exams"
                 onClick={() => navigate('/admin/exams')}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
-                  currentPath.startsWith('/admin/exams')
+                  currentPath === '/admin/exams'
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold'
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
                 <Layers className="w-4 h-4 text-emerald-800" />
                 Manage Exams
+              </button>
+
+              <button
+                type="button"
+                id="admin_nav_link_questions"
+                onClick={() => navigate('/admin/questions')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                  currentPath.startsWith('/admin/questions') || currentPath.includes('/questions')
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                <HelpCircle className="w-4 h-4 text-emerald-800" />
+                Exam Questions
               </button>
 
               <button
