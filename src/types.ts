@@ -5,19 +5,19 @@ export type AcademicLevel = 'ND1' | 'ND2' | 'HND1_SWD' | 'HND1_NCC' | 'HND2_SWD'
 export const ACADEMIC_LEVELS: { value: AcademicLevel; label: string; group: 'ND' | 'HND' }[] = [
   { value: 'ND1', label: 'ND 1', group: 'ND' },
   { value: 'ND2', label: 'ND 2', group: 'ND' },
-  { value: 'HND1_SWD', label: 'HND 1 — Software Engineering', group: 'HND' },
-  { value: 'HND1_NCC', label: 'HND 1 — Network & Computer Connectivity', group: 'HND' },
-  { value: 'HND2_SWD', label: 'HND 2 — Software Engineering', group: 'HND' },
-  { value: 'HND2_NCC', label: 'HND 2 — Network & Computer Connectivity', group: 'HND' },
+  { value: 'HND1_SWD', label: 'HND 1 — Software & Web Development', group: 'HND' },
+  { value: 'HND1_NCC', label: 'HND 1 — Networking & Cloud Computing', group: 'HND' },
+  { value: 'HND2_SWD', label: 'HND 2 — Software & Web Development', group: 'HND' },
+  { value: 'HND2_NCC', label: 'HND 2 — Networking & Cloud Computing', group: 'HND' },
 ];
 
 export const ACADEMIC_LEVEL_MAP: Record<AcademicLevel, string> = {
   ND1: 'ND 1',
   ND2: 'ND 2',
-  HND1_SWD: 'HND 1 — Software Engineering',
-  HND1_NCC: 'HND 1 — Network & Computer Connectivity',
-  HND2_SWD: 'HND 2 — Software Engineering',
-  HND2_NCC: 'HND 2 — Network & Computer Connectivity',
+  HND1_SWD: 'HND 1 — Software & Web Development',
+  HND1_NCC: 'HND 1 — Networking & Cloud Computing',
+  HND2_SWD: 'HND 2 — Software & Web Development',
+  HND2_NCC: 'HND 2 — Networking & Cloud Computing',
 };
 
 export interface Course {

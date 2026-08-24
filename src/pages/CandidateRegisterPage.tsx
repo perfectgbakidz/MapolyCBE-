@@ -295,10 +295,10 @@ export const CandidateRegisterPage: React.FC = () => {
                     <option value="ND2">ND 2</option>
                   </optgroup>
                   <optgroup label="Higher National Diploma (HND)">
-                    <option value="HND1_SWD">HND 1 — Software Engineering</option>
-                    <option value="HND1_NCC">HND 1 — Network &amp; Computer Connectivity</option>
-                    <option value="HND2_SWD">HND 2 — Software Engineering</option>
-                    <option value="HND2_NCC">HND 2 — Network &amp; Computer Connectivity</option>
+                    <option value="HND1_SWD">HND 1 — Software &amp; Web Development (SWD)</option>
+                    <option value="HND1_NCC">HND 1 — Networking &amp; Cloud Computing (NCC)</option>
+                    <option value="HND2_SWD">HND 2 — Software &amp; Web Development (SWD)</option>
+                    <option value="HND2_NCC">HND 2 — Networking &amp; Cloud Computing (NCC)</option>
                   </optgroup>
                 </select>
               </div>

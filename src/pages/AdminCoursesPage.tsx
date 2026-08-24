@@ -66,10 +66,10 @@ export const AdminCoursesPage: React.FC = () => {
     { value: 'ALL', label: 'All Levels' },
     { value: 'ND1', label: 'ND 1' },
     { value: 'ND2', label: 'ND 2' },
-    { value: 'HND1_SWD', label: 'HND 1 (SWD)' },
-    { value: 'HND1_NCC', label: 'HND 1 (NCC)' },
-    { value: 'HND2_SWD', label: 'HND 2 (SWD)' },
-    { value: 'HND2_NCC', label: 'HND 2 (NCC)' },
+    { value: 'HND1_SWD', label: 'HND 1 (SWD - Software & Web)' },
+    { value: 'HND1_NCC', label: 'HND 1 (NCC - Networking & Cloud)' },
+    { value: 'HND2_SWD', label: 'HND 2 (SWD - Software & Web)' },
+    { value: 'HND2_NCC', label: 'HND 2 (NCC - Networking & Cloud)' },
   ];
 
   return (
