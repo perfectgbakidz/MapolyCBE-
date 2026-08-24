@@ -40,7 +40,7 @@ const AppRoutes: React.FC = () => {
   }
 
   // 4. Admin Login
-  if (currentPath === '/admin/login') {
+  if (currentPath === '/admin/login' || currentPath === '/admin/signin' || currentPath === '/admin-login') {
     return <AdminLoginPage />;
   }
 

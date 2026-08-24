@@ -48,28 +48,68 @@ function matchPath(pattern: string, pathname: string): RouteMatch | null {
   return { path: pathname, params };
 }
 
+function extractCurrentPath(): string {
+  if (typeof window === 'undefined') return '/';
+
+  // 1. Check hash routing fallback (e.g., #/admin/login or #admin/login or #/results)
+  if (window.location.hash) {
+    const rawHash = window.location.hash.replace(/^#\/?/, '/');
+    if (rawHash && rawHash !== '/') {
+      return normalizePath(rawHash);
+    }
+  }
+
+  // 2. Check query param routing fallback (e.g., ?page=admin/login or ?route=/admin/login or ?admin=true)
+  const searchParams = new URLSearchParams(window.location.search);
+  const pageParam = searchParams.get('page') || searchParams.get('route') || searchParams.get('p');
+  if (pageParam) {
+    const formatted = pageParam.startsWith('/') ? pageParam : `/${pageParam}`;
+    return normalizePath(formatted);
+  }
+  if (searchParams.has('admin') || searchParams.has('admin_login')) {
+    return '/admin/login';
+  }
+
+  // 3. Standard pathname
+  return normalizePath(window.location.pathname);
+}
+
+function normalizePath(p: string): string {
+  if (!p) return '/';
+  const clean = p.split('?')[0].split('#')[0];
+  if (clean.length > 1 && clean.endsWith('/')) {
+    return clean.slice(0, -1);
+  }
+  return clean || '/';
+}
+
 export const RouterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentPath, setCurrentPath] = useState<string>(
-    typeof window !== 'undefined' ? window.location.pathname || '/' : '/'
-  );
+  const [currentPath, setCurrentPath] = useState<string>(extractCurrentPath());
   const [locationState, setLocationState] = useState<unknown>(
     typeof window !== 'undefined' ? window.history.state?.usr : undefined
   );
 
   useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      setCurrentPath(window.location.pathname || '/');
-      setLocationState(e.state?.usr || undefined);
+    const handleNavigationChange = (e?: PopStateEvent) => {
+      setCurrentPath(extractCurrentPath());
+      if (e) {
+        setLocationState(e.state?.usr || undefined);
+      }
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('popstate', handleNavigationChange);
+    window.addEventListener('hashchange', handleNavigationChange);
+    return () => {
+      window.removeEventListener('popstate', handleNavigationChange);
+      window.removeEventListener('hashchange', handleNavigationChange);
+    };
   }, []);
 
   const navigate = useCallback((to: string, state?: unknown) => {
     if (typeof window !== 'undefined') {
-      window.history.pushState({ usr: state }, '', to);
-      setCurrentPath(to);
+      const normalizedTo = normalizePath(to);
+      window.history.pushState({ usr: state }, '', normalizedTo);
+      setCurrentPath(normalizedTo);
       setLocationState(state);
       window.scrollTo(0, 0);
     }
