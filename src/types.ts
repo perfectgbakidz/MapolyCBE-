@@ -1,11 +1,44 @@
 export type Role = 'candidate' | 'admin';
 
+export type AcademicLevel = 'ND1' | 'ND2' | 'HND1_SWD' | 'HND1_NCC' | 'HND2_SWD' | 'HND2_NCC';
+
+export const ACADEMIC_LEVELS: { value: AcademicLevel; label: string; group: 'ND' | 'HND' }[] = [
+  { value: 'ND1', label: 'ND 1', group: 'ND' },
+  { value: 'ND2', label: 'ND 2', group: 'ND' },
+  { value: 'HND1_SWD', label: 'HND 1 — Software Engineering', group: 'HND' },
+  { value: 'HND1_NCC', label: 'HND 1 — Network & Computer Connectivity', group: 'HND' },
+  { value: 'HND2_SWD', label: 'HND 2 — Software Engineering', group: 'HND' },
+  { value: 'HND2_NCC', label: 'HND 2 — Network & Computer Connectivity', group: 'HND' },
+];
+
+export const ACADEMIC_LEVEL_MAP: Record<AcademicLevel, string> = {
+  ND1: 'ND 1',
+  ND2: 'ND 2',
+  HND1_SWD: 'HND 1 — Software Engineering',
+  HND1_NCC: 'HND 1 — Network & Computer Connectivity',
+  HND2_SWD: 'HND 2 — Software Engineering',
+  HND2_NCC: 'HND 2 — Network & Computer Connectivity',
+};
+
+export interface Course {
+  id: string;
+  name?: string;
+  title?: string;
+  code: string;
+  level: AcademicLevel;
+  description?: string;
+  created_at?: string;
+  createdAt?: string;
+  enrolled_candidates?: number;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: Role;
   regNumber?: string;
+  level?: AcademicLevel;
   phone?: string;
   department?: string;
   avatarUrl?: string;
@@ -43,6 +76,9 @@ export interface Exam {
   totalQuestions: number;
   passingScorePercent: number;
   status: ExamStatus;
+  courseId?: string;
+  course_id?: string;
+  level?: AcademicLevel;
   instructions: string[];
   randomizeQuestions: boolean;
   randomizeOptions: boolean;

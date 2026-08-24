@@ -11,11 +11,13 @@ import { CandidateRegisterPage } from './pages/CandidateRegisterPage';
 import { CandidateLoginPage } from './pages/CandidateLoginPage';
 import { AdminLoginPage } from './pages/AdminLoginPage';
 import { CandidateDashboardPage } from './pages/CandidateDashboardPage';
+import { CandidateCoursesPage } from './pages/CandidateCoursesPage';
 import { ExamInstructionsPage } from './pages/ExamInstructionsPage';
 import { TakeExamPage } from './pages/TakeExamPage';
 import { ExamSubmittedPage } from './pages/ExamSubmittedPage';
 import { MyResultsPage } from './pages/MyResultsPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { AdminCoursesPage } from './pages/AdminCoursesPage';
 import { AdminManageExamsPage } from './pages/AdminManageExamsPage';
 import { AdminManageQuestionsPage } from './pages/AdminManageQuestionsPage';
 import { AdminSecurityMonitoringPage } from './pages/AdminSecurityMonitoringPage';
@@ -49,6 +51,15 @@ const AppRoutes: React.FC = () => {
     return (
       <ProtectedRoute role="candidate" redirectTo="/login">
         <CandidateDashboardPage />
+      </ProtectedRoute>
+    );
+  }
+
+  // 5.1 Candidate Courses
+  if (currentPath === '/courses') {
+    return (
+      <ProtectedRoute role="candidate" redirectTo="/login">
+        <CandidateCoursesPage />
       </ProtectedRoute>
     );
   }
@@ -94,6 +105,15 @@ const AppRoutes: React.FC = () => {
     return (
       <ProtectedRoute role="admin" redirectTo="/admin/login">
         <AdminDashboardPage />
+      </ProtectedRoute>
+    );
+  }
+
+  // 10.1 Admin Courses Management
+  if (currentPath === '/admin/courses') {
+    return (
+      <ProtectedRoute role="admin" redirectTo="/admin/login">
+        <AdminCoursesPage />
       </ProtectedRoute>
     );
   }

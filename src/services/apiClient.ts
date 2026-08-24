@@ -10,9 +10,13 @@ import {
   SingleIntegrityVerification,
   ExamSession,
   AnswerRecord,
+  AcademicLevel,
+  Course,
+  ACADEMIC_LEVEL_MAP,
 } from '../types';
 import {
   authApi,
+  coursesApi,
   examsApi,
   responsesApi,
   securityApi,
@@ -87,6 +91,7 @@ class LiveApiClient {
     email: string;
     full_name: string;
     password: string;
+    level: AcademicLevel;
   }): Promise<{ token: string; user: User }> {
     try {
       const res = await authApi.candidateRegister({
@@ -94,6 +99,7 @@ class LiveApiClient {
         email: data.email.trim(),
         full_name: data.full_name.trim(),
         password: data.password,
+        level: data.level,
       });
 
       const user: User = {
@@ -101,6 +107,7 @@ class LiveApiClient {
         name: data.full_name,
         email: data.email,
         regNumber: data.matric_no,
+        level: data.level,
         role: 'candidate',
         registeredAt: new Date().toISOString(),
         lastLoginAt: new Date().toISOString(),
@@ -191,22 +198,108 @@ class LiveApiClient {
   }
 
   // -------------------------------------------------------------
+  // COURSES MANAGEMENT
+  // -------------------------------------------------------------
+
+  public async getCourses(level?: string): Promise<Course[]> {
+    const token = this.getAdminToken() || this.getCandidateToken();
+    if (!token) throw new ApiError(401, 'Authentication required');
+    try {
+      const rawList = await coursesApi.getCourses(token, level);
+      return (rawList || []).map((c: any) => ({
+        id: c.id,
+        name: c.name || c.title || '',
+        title: c.title || c.name || '',
+        code: c.code,
+        level: c.level,
+        description: c.description || '',
+        created_at: c.created_at,
+        createdAt: c.created_at,
+        enrolled_candidates: c.enrolled_candidates,
+      }));
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async getMyCourses(): Promise<Course[]> {
+    const candidateToken = this.getCandidateToken();
+    if (!candidateToken) throw new ApiError(401, 'Candidate authentication required');
+    try {
+      const rawList = await coursesApi.getMyCourses(candidateToken);
+      return (rawList || []).map((c: any) => ({
+        id: c.id,
+        name: c.name || c.title || '',
+        title: c.title || c.name || '',
+        code: c.code,
+        level: c.level,
+        description: c.description || '',
+        created_at: c.created_at,
+        createdAt: c.created_at,
+        enrolled_candidates: c.enrolled_candidates,
+      }));
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async createCourse(data: {
+    name?: string;
+    title?: string;
+    code: string;
+    level: AcademicLevel;
+    description?: string;
+  }): Promise<Course & { enrolled_candidates?: number }> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+    try {
+      const res = await coursesApi.createCourse(
+        {
+          name: (data.name || data.title || '').trim(),
+          title: (data.title || data.name || '').trim(),
+          code: data.code.trim().toUpperCase(),
+          level: data.level,
+          description: data.description?.trim(),
+        },
+        adminToken
+      );
+      return {
+        id: res.id,
+        name: res.name || res.title || '',
+        title: res.title || res.name || '',
+        code: res.code,
+        level: res.level,
+        description: res.description,
+        created_at: res.created_at,
+        createdAt: res.created_at,
+        enrolled_candidates: res.enrolled_candidates,
+      };
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  // -------------------------------------------------------------
   // EXAMINATIONS & QUESTIONS
   // -------------------------------------------------------------
 
   public async getExams(): Promise<Exam[]> {
     try {
-      const rawList = await examsApi.getExams();
+      const token = this.getCandidateToken() || this.getAdminToken();
+      const rawList = await examsApi.getExams(token);
       return (rawList || []).map((item: any, idx: number) => ({
         id: item.id,
         title: item.title,
         code: item.title.includes(':') ? item.title.split(':')[0].trim() : `CBE-${100 + idx}`,
-        category: 'Official Assessment',
+        category: item.level ? (ACADEMIC_LEVEL_MAP[item.level as AcademicLevel] || item.level) : 'Official Assessment',
         description: item.description || 'Moshood Abiola Polytechnic computer-based examination.',
         durationMinutes: item.duration_minutes || 60,
         totalQuestions: item.total_questions || 0,
         passingScorePercent: 50,
         status: item.is_active !== false ? 'published' : 'draft',
+        courseId: item.course_id,
+        course_id: item.course_id,
+        level: item.level,
         instructions: [
           'Read each question thoroughly before selecting an option.',
           'Answers are synchronized to the cryptographic ledger in real time.',
@@ -226,9 +319,10 @@ class LiveApiClient {
 
   public async getExamById(examId: string): Promise<Exam> {
     try {
-      const item = await examsApi.getExam(examId);
       const candidateToken = this.getCandidateToken();
       const adminToken = this.getAdminToken();
+      const token = candidateToken || adminToken;
+      const item = await examsApi.getExam(examId, token);
       let questions: Question[] = [];
 
       if (adminToken) {
@@ -251,12 +345,15 @@ class LiveApiClient {
         id: item.id,
         title: item.title,
         code: item.title.includes(':') ? item.title.split(':')[0].trim() : 'CBE-EXAM',
-        category: 'Official Assessment',
+        category: item.level ? (ACADEMIC_LEVEL_MAP[item.level as AcademicLevel] || item.level) : 'Official Assessment',
         description: item.description || 'Moshood Abiola Polytechnic computer-based examination.',
         durationMinutes: item.duration_minutes || 60,
         totalQuestions: questions.length,
         passingScorePercent: 50,
         status: item.is_active !== false ? 'published' : 'draft',
+        courseId: item.course_id,
+        course_id: item.course_id,
+        level: item.level,
         instructions: [
           'Read each question thoroughly before selecting an option.',
           'Answers are synchronized to the cryptographic ledger in real time.',
@@ -292,8 +389,10 @@ class LiveApiClient {
     }));
   }
 
-  public async createExam(examData: Partial<Exam> | {
+  public async createExam(examData: Partial<Exam> & {
     title: string;
+    course_id?: string;
+    courseId?: string;
     description?: string;
     durationMinutes: number;
   }): Promise<Exam> {
@@ -303,6 +402,11 @@ class LiveApiClient {
     const title = examData.title || 'Untitled Exam';
     const description = examData.description || '';
     const durationMinutes = examData.durationMinutes || 60;
+    const courseId = examData.course_id || examData.courseId || '';
+
+    if (!courseId) {
+      throw new ApiError(422, 'Course is required to create an examination.');
+    }
 
     try {
       const res = await examsApi.createExam(
@@ -310,6 +414,7 @@ class LiveApiClient {
           title,
           description,
           duration_minutes: durationMinutes,
+          course_id: courseId,
         },
         adminToken
       );
@@ -324,6 +429,9 @@ class LiveApiClient {
         totalQuestions: 0,
         passingScorePercent: 50,
         status: res.is_active ? 'published' : 'draft',
+        courseId: res.course_id || courseId,
+        course_id: res.course_id || courseId,
+        level: res.level,
         instructions: ['Follow all official exam guidelines.'],
         randomizeQuestions: false,
         randomizeOptions: false,

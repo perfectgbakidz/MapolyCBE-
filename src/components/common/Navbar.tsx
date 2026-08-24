@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   ShieldCheck,
   BookOpen,
+  GraduationCap,
   Award,
   LogOut,
   LogIn,
@@ -60,6 +61,19 @@ export const Navbar: React.FC = () => {
                 >
                   <BookOpen className="w-4 h-4" />
                   Available Exams
+                </button>
+                <button
+                  type="button"
+                  id="nav_link_courses"
+                  onClick={() => navigate('/courses')}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                    currentPath === '/courses'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-300/80 font-bold'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  My Courses
                 </button>
                 <button
                   type="button"

@@ -148,9 +148,11 @@ function handleUnauthorizedSession() {
  * 4.4 Endpoint reference helper modules
  */
 
+import { AcademicLevel } from '../types';
+
 // Auth Endpoints
 export const authApi = {
-  candidateRegister: (body: { matric_no: string; email: string; full_name: string; password: string }) =>
+  candidateRegister: (body: { matric_no: string; email: string; full_name: string; password: string; level: AcademicLevel }) =>
     apiRequest<{ access_token: string; token_type: string; role: 'candidate'; user: any }>('/auth/candidate/register', {
       method: 'POST',
       body,
@@ -175,13 +177,59 @@ export const authApi = {
     }),
 };
 
+// Courses Endpoints
+export const coursesApi = {
+  getCourses: (token: string, level?: string) =>
+    apiRequest<any[]>('/courses', {
+      method: 'GET',
+      token,
+      params: level && level !== 'ALL' ? { level } : undefined,
+    }),
+
+  getMyCourses: (token: string) =>
+    apiRequest<any[]>('/courses/mine', {
+      method: 'GET',
+      token,
+    }),
+
+  createCourse: (
+    body: { name?: string; title?: string; code: string; level: AcademicLevel; description?: string },
+    token: string
+  ) =>
+    apiRequest<{ id: string; name?: string; title?: string; code: string; level: AcademicLevel; description?: string; created_at: string; enrolled_candidates?: number }>(
+      '/courses',
+      {
+        method: 'POST',
+        body: {
+          name: body.name || body.title || '',
+          title: body.title || body.name || '',
+          code: body.code,
+          level: body.level,
+          description: body.description,
+        },
+        token,
+      }
+    ),
+};
+
 // Exams & Questions Endpoints
 export const examsApi = {
-  getExams: () => apiRequest<any[]>('/exams', { method: 'GET' }),
+  getExams: (token?: string | null) =>
+    apiRequest<any[]>('/exams', {
+      method: 'GET',
+      token,
+    }),
 
-  getExam: (examId: string) => apiRequest<any>(`/exams/${examId}`, { method: 'GET' }),
+  getExam: (examId: string, token?: string | null) =>
+    apiRequest<any>(`/exams/${examId}`, {
+      method: 'GET',
+      token,
+    }),
 
-  createExam: (body: { title: string; description?: string; duration_minutes: number }, token: string) =>
+  createExam: (
+    body: { title: string; description?: string; duration_minutes: number; course_id: string },
+    token: string
+  ) =>
     apiRequest<any>('/exams', {
       method: 'POST',
       body,
@@ -205,7 +253,7 @@ export const examsApi = {
       token,
     }),
 
-  getExamQuestions: (examId: string, token?: string) =>
+  getExamQuestions: (examId: string, token?: string | null) =>
     apiRequest<any[]>(`/exams/${examId}/questions`, {
       method: 'GET',
       token,

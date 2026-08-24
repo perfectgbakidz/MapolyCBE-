@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { Navbar } from '../components/common/Navbar';
 import { Footer } from '../components/common/Footer';
 import { ApiError } from '../services/apiClient';
+import { AcademicLevel } from '../types';
 import {
   UserPlus,
   Mail,
@@ -13,6 +14,7 @@ import {
   Lock,
   Loader2,
   AlertCircle,
+  GraduationCap,
 } from 'lucide-react';
 
 export const CandidateRegisterPage: React.FC = () => {
@@ -24,6 +26,7 @@ export const CandidateRegisterPage: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [level, setLevel] = useState<AcademicLevel | ''>('');
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -54,6 +57,10 @@ export const CandidateRegisterPage: React.FC = () => {
       errors.email = 'Please enter a valid email address.';
     }
 
+    if (!level) {
+      errors.level = 'Academic level is required.';
+    }
+
     if (!password) {
       errors.password = 'Password is required.';
     } else if (password.length < 8 || password.length > 128) {
@@ -80,8 +87,9 @@ export const CandidateRegisterPage: React.FC = () => {
         full_name: fullName.trim(),
         email: email.trim(),
         password: password,
+        level: level as AcademicLevel,
       });
-      success('Account Created', 'Candidate registration completed successfully.');
+      success('Account Created', 'Candidate registration completed successfully. You have been enrolled in courses for your level.');
       navigate('/dashboard');
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -90,7 +98,7 @@ export const CandidateRegisterPage: React.FC = () => {
           if (err.fieldErrors) {
             setFieldErrors(err.fieldErrors);
           } else {
-            setFormError('matric_no or email already registered');
+            setFormError('Matric number or email is already registered.');
           }
         } else if (err.status === 422 && err.fieldErrors) {
           // Validation error mapping
@@ -124,7 +132,7 @@ export const CandidateRegisterPage: React.FC = () => {
             </div>
             <h1 className="text-2xl font-black text-stone-900 tracking-tight">Candidate Registration</h1>
             <p className="text-xs text-stone-500 mt-1 font-medium">
-              Create your official examination candidate profile
+              Create your profile and enroll in your level's courses
             </p>
           </div>
 
@@ -254,7 +262,58 @@ export const CandidateRegisterPage: React.FC = () => {
               )}
             </div>
 
-            {/* Field 4: Password */}
+            {/* Field 4: Academic Level (Required, Grouped) */}
+            <div>
+              <label htmlFor="reg_select_level" className="block text-xs font-bold text-stone-700 mb-1">
+                Academic Level *
+              </label>
+              <div className="relative">
+                <GraduationCap className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  id="reg_select_level"
+                  name="level"
+                  value={level}
+                  onChange={(e) => {
+                    setLevel(e.target.value as AcademicLevel);
+                    if (fieldErrors.level) {
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.level;
+                        return next;
+                      });
+                    }
+                  }}
+                  className={`w-full bg-stone-50 border rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-stone-900 focus:outline-none transition ${
+                    fieldErrors.level
+                      ? 'border-rose-500 bg-rose-50/30 focus:border-rose-600 focus:ring-1 focus:ring-rose-500'
+                      : 'border-stone-300 focus:bg-white focus:border-emerald-800 focus:ring-1 focus:ring-emerald-800'
+                  }`}
+                >
+                  <option value="">Select your academic level...</option>
+                  <optgroup label="National Diploma (ND)">
+                    <option value="ND1">ND 1</option>
+                    <option value="ND2">ND 2</option>
+                  </optgroup>
+                  <optgroup label="Higher National Diploma (HND)">
+                    <option value="HND1_SWD">HND 1 — Software Engineering</option>
+                    <option value="HND1_NCC">HND 1 — Network &amp; Computer Connectivity</option>
+                    <option value="HND2_SWD">HND 2 — Software Engineering</option>
+                    <option value="HND2_NCC">HND 2 — Network &amp; Computer Connectivity</option>
+                  </optgroup>
+                </select>
+              </div>
+              {fieldErrors.level && (
+                <p id="error_level" className="mt-1 text-[11px] text-rose-600 font-medium flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  <span>{fieldErrors.level}</span>
+                </p>
+              )}
+              <p className="text-[11px] text-stone-500 mt-1 font-normal">
+                You will be automatically enrolled in courses configured for this level.
+              </p>
+            </div>
+
+            {/* Field 5: Password */}
             <div>
               <label htmlFor="reg_input_password" className="block text-xs font-bold text-stone-700 mb-1">
                 Password (min 8 characters) *

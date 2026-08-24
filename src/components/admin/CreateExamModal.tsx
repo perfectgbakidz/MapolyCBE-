@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Exam, ExamStatus } from '../../types';
+import { Exam, ExamStatus, Course, ACADEMIC_LEVEL_MAP, AcademicLevel } from '../../types';
 import { apiClient } from '../../services/apiClient';
-import { X, Plus, Trash2, Layers, AlertCircle } from 'lucide-react';
+import { X, Plus, Trash2, Layers, AlertCircle, BookOpen, Loader2 } from 'lucide-react';
 
 interface CreateExamModalProps {
   isOpen: boolean;
@@ -18,6 +18,10 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
   onExamCreated,
   initialExam,
 }) => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(false);
+  const [courseId, setCourseId] = useState('');
+
   const [title, setTitle] = useState('');
   const [code, setCode] = useState('');
   const [category, setCategory] = useState('Computer Science');
@@ -35,10 +39,29 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // Load courses
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchCourses = async () => {
+      setIsLoadingCourses(true);
+      try {
+        const fetched = await apiClient.getCourses();
+        setCourses(fetched);
+      } catch (e) {
+        console.error('Failed to load courses for exam creation modal:', e);
+      } finally {
+        setIsLoadingCourses(false);
+      }
+    };
+    fetchCourses();
+  }, [isOpen]);
+
   useEffect(() => {
     if (initialExam) {
       setTitle(initialExam.title || '');
       setCode(initialExam.code || '');
+      setCourseId(initialExam.course_id || initialExam.courseId || '');
       setCategory(initialExam.category || 'Computer Science');
       setDescription(initialExam.description || '');
       setDurationMinutes(initialExam.durationMinutes || 45);
@@ -57,6 +80,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
     } else {
       setTitle('');
       setCode(`EX-${Math.floor(100 + Math.random() * 900)}-2026`);
+      setCourseId('');
       setCategory('Computer Science');
       setDescription('');
       setDurationMinutes(45);
@@ -74,6 +98,20 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleCourseChange = (selectedId: string) => {
+    setCourseId(selectedId);
+    const selectedCourse = courses.find((c) => c.id === selectedId);
+    if (selectedCourse) {
+      // Auto-suggest title and code if currently blank or default
+      if (!title || title.startsWith('EX-') || title === '') {
+        setTitle(`${selectedCourse.code}: ${selectedCourse.title} Examination`);
+      }
+      if (!code || code.startsWith('EX-')) {
+        setCode(selectedCourse.code);
+      }
+    }
+  };
+
   const handleAddInstruction = () => {
     if (newInstruction.trim()) {
       setInstructions([...instructions, newInstruction.trim()]);
@@ -88,6 +126,11 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
+
+    if (!courseId) {
+      setValidationError('Please select the Course this examination belongs to.');
+      return;
+    }
 
     // Validation (mirrors backend rules)
     const trimmedTitle = title.trim();
@@ -109,9 +152,11 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const payload: Partial<Exam> = {
+      const payload: Partial<Exam> & { course_id?: string; courseId?: string } = {
         title: trimmedTitle,
         code: code.trim().toUpperCase(),
+        course_id: courseId,
+        courseId: courseId,
         category,
         description: description.trim() || 'Comprehensive Computer-Based Examination evaluation.',
         durationMinutes: dur,
@@ -127,7 +172,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
         if (initialExam) {
           await apiClient.updateExam(initialExam.id, payload);
         } else {
-          await apiClient.createExam(payload);
+          await apiClient.createExam(payload as any);
         }
         if (onExamCreated) {
           onExamCreated();
@@ -153,7 +198,7 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
               <h3 className="text-lg font-black text-stone-900">
                 {initialExam ? 'Edit Examination' : 'Create New Examination'}
               </h3>
-              <p className="text-xs text-stone-600 font-medium">Configure parameters, duration, and instructions</p>
+              <p className="text-xs text-stone-600 font-medium">Link exam to a Course and configure examination parameters</p>
             </div>
           </div>
           <button
@@ -172,6 +217,40 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
               <span>{validationError}</span>
             </div>
           )}
+
+          {/* Course Selection (Required) */}
+          <div>
+            <label className="block text-xs font-bold text-stone-800 mb-1.5 flex items-center justify-between">
+              <span>Associated Course (Determines Candidate Level Access) *</span>
+              {isLoadingCourses && (
+                <span className="text-[11px] text-stone-500 flex items-center gap-1 font-normal">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Loading courses...
+                </span>
+              )}
+            </label>
+            <div className="relative">
+              <BookOpen className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                id="exam_course_select"
+                required
+                value={courseId}
+                onChange={(e) => handleCourseChange(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-stone-900 focus:outline-none focus:border-emerald-800 focus:ring-1 focus:ring-emerald-800"
+              >
+                <option value="">Select the associated Course...</option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    [{course.level ? (ACADEMIC_LEVEL_MAP[course.level as AcademicLevel] || course.level) : 'General'}] {course.code} — {course.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {courses.length === 0 && !isLoadingCourses && (
+              <p className="text-[11px] text-amber-700 mt-1">
+                No courses found. You can create courses in the Courses management page first.
+              </p>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

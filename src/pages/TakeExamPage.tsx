@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from '../context/RouterContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { apiClient } from '../services/apiClient';
+import { apiClient, ApiError } from '../services/apiClient';
 import { Exam, Question, AnswerRecord, ExamSession } from '../types';
 import { CountdownTimer } from '../components/exam/CountdownTimer';
 import { QuestionNavigator } from '../components/exam/QuestionNavigator';
@@ -69,6 +69,11 @@ export const TakeExamPage: React.FC = () => {
         }
         setTabSwitchCount(sessionData.tabSwitchCount || 0);
       } catch (err: unknown) {
+        if (err instanceof ApiError && err.status === 403) {
+          error('Access Denied', "You don't have access to this exam.");
+          navigate('/dashboard');
+          return;
+        }
         const msg = err instanceof Error ? err.message : 'Failed to initialize examination session';
         error('Session Error', msg);
         navigate('/dashboard');

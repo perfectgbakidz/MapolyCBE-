@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from '../context/RouterContext';
 import { useAuth } from '../context/AuthContext';
-import { apiClient } from '../services/apiClient';
+import { useToast } from '../context/ToastContext';
+import { apiClient, ApiError } from '../services/apiClient';
 import { Exam } from '../types';
 import { Navbar } from '../components/common/Navbar';
 import { Footer } from '../components/common/Footer';
@@ -24,6 +25,7 @@ export const ExamInstructionsPage: React.FC = () => {
   const { navigate } = useRouter();
   const params = useParams();
   const { candidateUser } = useAuth();
+  const { error: showErrorToast } = useToast();
   const examId = params.examId;
 
   const [exam, setExam] = useState<Exam | null>(null);
@@ -45,6 +47,11 @@ export const ExamInstructionsPage: React.FC = () => {
         setExam(examData);
         setQuestionCount(questionsData.length || examData.totalQuestions || 0);
       } catch (err: unknown) {
+        if (err instanceof ApiError && err.status === 403) {
+          showErrorToast('Access Denied', "You don't have access to this exam.");
+          navigate('/dashboard');
+          return;
+        }
         setErrorMsg(err instanceof Error ? err.message : 'Examination details could not be loaded.');
       } finally {
         setIsLoading(false);
@@ -52,7 +59,7 @@ export const ExamInstructionsPage: React.FC = () => {
     };
 
     fetchExamAndQuestions();
-  }, [examId]);
+  }, [examId, navigate, showErrorToast]);
 
   const handleBeginExam = () => {
     if (!exam) return;

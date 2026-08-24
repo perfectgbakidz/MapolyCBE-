@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from '../context/RouterContext';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../services/apiClient';
-import { Exam, ExamResult } from '../types';
+import { Exam, ExamResult, ACADEMIC_LEVEL_MAP, AcademicLevel } from '../types';
 import { Navbar } from '../components/common/Navbar';
 import { Footer } from '../components/common/Footer';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
@@ -16,6 +16,7 @@ import {
   FileText,
   ShieldCheck,
   CheckCircle,
+  GraduationCap,
 } from 'lucide-react';
 
 export const CandidateDashboardPage: React.FC = () => {
@@ -84,13 +85,19 @@ export const CandidateDashboardPage: React.FC = () => {
                 {candidateUser?.name?.charAt(0) || 'C'}
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-xl font-bold text-stone-900 tracking-tight">
                     Welcome, {candidateUser?.name || 'Candidate'}
                   </h1>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-300 flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5" /> Verified Candidate
                   </span>
+                  {candidateUser?.level && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-800 text-xs font-bold border border-stone-300 flex items-center gap-1">
+                      <GraduationCap className="w-3.5 h-3.5 text-emerald-800" />
+                      {ACADEMIC_LEVEL_MAP[candidateUser.level as AcademicLevel] || candidateUser.level}
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500 mt-1 font-mono">
                   <span>Matric No: <strong className="text-emerald-800 font-bold">{candidateUser?.regNumber || 'CBT/2026/CS/0492'}</strong></span>
@@ -101,6 +108,15 @@ export const CandidateDashboardPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                id="dashboard_view_courses_btn"
+                onClick={() => navigate('/courses')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold border border-emerald-300 transition"
+              >
+                <BookOpen className="w-4 h-4 text-emerald-800" />
+                <span>My Courses</span>
+              </button>
               <button
                 type="button"
                 id="dashboard_view_results_btn"

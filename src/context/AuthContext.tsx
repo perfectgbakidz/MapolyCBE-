@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Role } from '../types';
+import { User, Role, AcademicLevel } from '../types';
 import { apiClient } from '../services/apiClient';
 
 const CANDIDATE_TOKEN_KEY = 'mapolycbe_candidate_token_v1';
@@ -29,6 +29,7 @@ interface AuthContextType {
     name?: string;
     email: string;
     password?: string;
+    level: AcademicLevel;
     phone?: string;
     department?: string;
   }) => Promise<User>;
@@ -122,6 +123,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     phone?: string;
     department?: string;
     password?: string;
+    level: AcademicLevel;
   }): Promise<User> => {
     const matricNo = data.matric_no || `CBT/2026/CS/${Math.floor(1000 + Math.random() * 9000)}`;
     const fullName = data.full_name || data.name || 'Candidate';
@@ -130,6 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       full_name: fullName,
       email: data.email,
       password: data.password || 'Candidate@123!',
+      level: data.level,
     });
     setCandidateUser(res.user);
     setCandidateToken(res.token);
