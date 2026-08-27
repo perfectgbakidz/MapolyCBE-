@@ -48,62 +48,62 @@ export const ExamSubmittedPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-slate-50 text-stone-900 flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 my-8">
         <div
           id="exam_submitted_summary_card"
-          className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-10 text-center relative overflow-hidden animate-fadeIn"
+          className="w-full max-w-lg bg-white border border-stone-200 rounded-3xl shadow-sm p-6 sm:p-10 text-center relative overflow-hidden animate-fadeIn"
         >
           {/* Subtle background glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
           {/* Success Icon */}
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-950/50">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 flex items-center justify-center mx-auto mb-5 shadow-xs">
             <CheckCircle2 className="w-9 h-9 stroke-[2.5]" />
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
+          <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight mb-2">
             Examination Submitted!
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed max-w-md mx-auto">
+          <p className="text-xs sm:text-sm text-stone-600 mb-6 leading-relaxed max-w-md mx-auto font-medium">
             Your responses have been successfully graded, sealed, and written to the tamper-proof ledger.
           </p>
 
           {/* Receipt Box */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-left mb-6">
-            <div className="flex items-center justify-between text-xs text-slate-400 mb-1 pb-1 border-b border-slate-850">
-              <span className="flex items-center gap-1.5 font-semibold text-slate-300">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-left mb-6">
+            <div className="flex items-center justify-between text-xs text-stone-500 mb-1 pb-1 border-b border-stone-200">
+              <span className="flex items-center gap-1.5 font-bold text-stone-800">
+                <ShieldCheck className="w-4 h-4 text-emerald-800" />
                 Anti-Tamper Integrity Receipt
               </span>
-              <span className="text-[10px] font-mono text-emerald-400">SHA-256 HMAC</span>
+              <span className="text-[10px] font-mono text-emerald-800 font-bold">SHA-256 HMAC</span>
             </div>
 
             <div className="flex items-center justify-between gap-2 mt-2">
-              <span className="font-mono text-xs text-teal-300 font-bold select-all truncate">
+              <span className="font-mono text-xs text-emerald-900 font-bold select-all truncate">
                 {receipt}
               </span>
               <button
                 type="button"
                 id="btn_copy_receipt"
                 onClick={handleCopyReceipt}
-                className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition shrink-0"
+                className="p-1.5 rounded-lg bg-white hover:bg-stone-100 text-stone-600 hover:text-stone-900 border border-stone-300 transition shrink-0 shadow-xs"
                 title="Copy receipt ID"
               >
                 <Copy className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-850">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] font-mono text-stone-600 pt-2 border-t border-stone-200">
               <div>
-                <span className="text-slate-500 block">Candidate:</span>
-                <span className="text-slate-200">{candidateUser?.name || 'Candidate'}</span>
+                <span className="text-stone-400 block font-semibold">Candidate:</span>
+                <span className="text-stone-800 font-bold">{candidateUser?.name || 'Candidate'}</span>
               </div>
               <div>
-                <span className="text-slate-500 block">Timestamp:</span>
-                <span className="text-slate-200">{new Date().toLocaleTimeString()} UTC</span>
+                <span className="text-stone-400 block font-semibold">Timestamp:</span>
+                <span className="text-stone-800 font-bold">{new Date().toLocaleTimeString()} UTC</span>
               </div>
             </div>
           </div>
@@ -114,7 +114,7 @@ export const ExamSubmittedPage: React.FC = () => {
               type="button"
               id="btn_view_results_instant"
               onClick={() => navigate('/results')}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950 transition hover:scale-[1.01]"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition hover:scale-[1.01]"
             >
               <Award className="w-4 h-4" />
               <span>View Graded Results</span>
@@ -125,7 +125,7 @@ export const ExamSubmittedPage: React.FC = () => {
               type="button"
               id="return_to_dashboard_btn"
               onClick={() => navigate('/dashboard')}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 font-semibold text-xs border border-slate-700 transition"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs border border-stone-300 transition"
             >
               <LayoutDashboard className="w-4 h-4" />
               <span>Candidate Dashboard</span>

@@ -18,6 +18,7 @@ import { ExamSubmittedPage } from './pages/ExamSubmittedPage';
 import { MyResultsPage } from './pages/MyResultsPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AdminCoursesPage } from './pages/AdminCoursesPage';
+import { AdminStudentsPage } from './pages/AdminStudentsPage';
 import { AdminManageExamsPage } from './pages/AdminManageExamsPage';
 import { AdminManageQuestionsPage } from './pages/AdminManageQuestionsPage';
 import { AdminQuestionBankPage } from './pages/AdminQuestionBankPage';
@@ -115,6 +116,15 @@ const AppRoutes: React.FC = () => {
     return (
       <ProtectedRoute role="admin" redirectTo="/admin/login">
         <AdminCoursesPage />
+      </ProtectedRoute>
+    );
+  }
+
+  // 10.2 Admin Students Management & Candidate Results
+  if (currentPath === '/admin/students') {
+    return (
+      <ProtectedRoute role="admin" redirectTo="/admin/login">
+        <AdminStudentsPage />
       </ProtectedRoute>
     );
   }

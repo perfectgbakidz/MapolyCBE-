@@ -46,6 +46,38 @@ export interface User {
   lastLoginAt: string;
 }
 
+export interface CandidateAdminView {
+  id: string;
+  matric_no: string;
+  email: string;
+  full_name: string;
+  level: AcademicLevel;
+  is_active: boolean;
+  is_locked: boolean;
+  failed_login_attempts: number;
+  created_at: string;
+}
+
+export interface CandidateAdminDetail extends CandidateAdminView {
+  enrolled_courses: Course[];
+}
+
+export interface CandidateUpdate {
+  full_name?: string;
+  email?: string;
+  level?: AcademicLevel;
+}
+
+export interface StudentResultWithExam {
+  id: string;
+  exam_id: string;
+  exam_title: string;
+  score: number;
+  total_questions: number;
+  submitted_at: string;
+  checksum: string;
+}
+
 export interface QuestionOption {
   id: string; // 'A' | 'B' | 'C' | 'D'
   text: string;

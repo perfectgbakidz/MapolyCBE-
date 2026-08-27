@@ -13,6 +13,10 @@ import {
   AcademicLevel,
   Course,
   ACADEMIC_LEVEL_MAP,
+  CandidateAdminView,
+  CandidateAdminDetail,
+  CandidateUpdate,
+  StudentResultWithExam,
 } from '../types';
 import {
   authApi,
@@ -21,6 +25,7 @@ import {
   responsesApi,
   securityApi,
   healthApi,
+  studentsApi,
 } from '../api/client';
 
 export class ApiError extends Error {
@@ -873,11 +878,99 @@ class LiveApiClient {
     }
   }
 
+  // -------------------------------------------------------------
+  // ADMIN: STUDENT & CANDIDATE MANAGEMENT
+  // -------------------------------------------------------------
+
+  public async listStudents(filters?: { level?: string; search?: string }): Promise<CandidateAdminView[]> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    try {
+      return await studentsApi.listStudents(
+        {
+          level: filters?.level && filters.level !== 'ALL' ? filters.level : undefined,
+          search: filters?.search && filters.search.trim() ? filters.search.trim() : undefined,
+        },
+        adminToken
+      );
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async getStudentProfile(candidateId: string): Promise<CandidateAdminDetail> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    try {
+      return await studentsApi.getStudentProfile(candidateId, adminToken);
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async updateStudent(candidateId: string, updates: CandidateUpdate): Promise<CandidateAdminView> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    try {
+      return await studentsApi.updateStudent(candidateId, updates, adminToken);
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async deactivateStudent(candidateId: string): Promise<CandidateAdminView> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    try {
+      return await studentsApi.deactivateStudent(candidateId, adminToken);
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async activateStudent(candidateId: string): Promise<CandidateAdminView> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    try {
+      return await studentsApi.activateStudent(candidateId, adminToken);
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async unlockStudent(candidateId: string): Promise<CandidateAdminView> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    try {
+      return await studentsApi.unlockStudent(candidateId, adminToken);
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async getStudentResults(candidateId: string): Promise<StudentResultWithExam[]> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    try {
+      return await studentsApi.getStudentResults(candidateId, adminToken);
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
   public async getAdminDashboardStats(): Promise<AdminDashboardStats> {
     try {
-      const [exams, logs] = await Promise.all([
+      const [exams, logs, students] = await Promise.all([
         this.getExams().catch(() => []),
         this.getSecurityLogs({ limit: 100 }).catch(() => []),
+        this.listStudents().catch(() => []),
       ]);
 
       const criticalCount = logs.filter((l) => l.severity === 'critical' || l.severity === 'high').length;
@@ -888,7 +981,7 @@ class LiveApiClient {
 
       return {
         activeExamsCount: exams.filter((e) => e.status === 'published').length,
-        totalCandidatesCount: Math.max(1, new Set(logs.map((l) => l.actorId).filter(Boolean)).size),
+        totalCandidatesCount: students.length > 0 ? students.length : Math.max(1, new Set(logs.map((l) => l.actorId).filter(Boolean)).size),
         submissionsTodayCount: submissionsToday || logs.filter((l) => l.eventType === 'EXAM_SUBMITTED').length,
         securityAlertsTodayCount: criticalCount,
         averageScorePercentage: 74.2,

@@ -148,7 +148,7 @@ function handleUnauthorizedSession() {
  * 4.4 Endpoint reference helper modules
  */
 
-import { AcademicLevel } from '../types';
+import { AcademicLevel, CandidateAdminView, CandidateAdminDetail, CandidateUpdate, StudentResultWithExam } from '../types';
 
 // Auth Endpoints
 export const authApi = {
@@ -329,4 +329,54 @@ export const securityApi = {
 // Health Check Endpoint
 export const healthApi = {
   checkHealth: () => apiRequest<{ status: string; timestamp?: string }>('/health', { method: 'GET' }),
+};
+
+// Admin Student Management & Results Endpoints
+export const studentsApi = {
+  listStudents: (params: { level?: string; search?: string } = {}, token: string) =>
+    apiRequest<CandidateAdminView[]>('/admin/students', {
+      method: 'GET',
+      token,
+      params: {
+        ...(params.level && params.level !== 'ALL' ? { level: params.level } : {}),
+        ...(params.search && params.search.trim() ? { search: params.search.trim() } : {}),
+      },
+    }),
+
+  getStudentProfile: (candidateId: string, token: string) =>
+    apiRequest<CandidateAdminDetail>(`/admin/students/${candidateId}`, {
+      method: 'GET',
+      token,
+    }),
+
+  updateStudent: (candidateId: string, body: CandidateUpdate, token: string) =>
+    apiRequest<CandidateAdminView>(`/admin/students/${candidateId}`, {
+      method: 'PATCH',
+      body,
+      token,
+    }),
+
+  deactivateStudent: (candidateId: string, token: string) =>
+    apiRequest<CandidateAdminView>(`/admin/students/${candidateId}/deactivate`, {
+      method: 'POST',
+      token,
+    }),
+
+  activateStudent: (candidateId: string, token: string) =>
+    apiRequest<CandidateAdminView>(`/admin/students/${candidateId}/activate`, {
+      method: 'POST',
+      token,
+    }),
+
+  unlockStudent: (candidateId: string, token: string) =>
+    apiRequest<CandidateAdminView>(`/admin/students/${candidateId}/unlock`, {
+      method: 'POST',
+      token,
+    }),
+
+  getStudentResults: (candidateId: string, token: string) =>
+    apiRequest<StudentResultWithExam[]>(`/admin/students/${candidateId}/results`, {
+      method: 'GET',
+      token,
+    }),
 };

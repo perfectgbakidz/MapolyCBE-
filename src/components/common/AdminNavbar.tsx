@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Layers,
   GraduationCap,
+  Users,
   HelpCircle,
   Activity,
   LogOut,
@@ -93,6 +94,20 @@ export const AdminNavbar: React.FC = () => {
               >
                 <GraduationCap className="w-4 h-4 text-emerald-800" />
                 Courses
+              </button>
+
+              <button
+                type="button"
+                id="admin_nav_link_students"
+                onClick={() => navigate('/admin/students')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                  currentPath.startsWith('/admin/students')
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                <Users className="w-4 h-4 text-emerald-800" />
+                Students
               </button>
 
               <button

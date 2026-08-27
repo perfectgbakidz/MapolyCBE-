@@ -78,12 +78,21 @@ export const AdminDashboardPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              id="admin_dash_add_questions_btn"
-              onClick={() => navigate('/admin/questions')}
+              id="admin_dash_manage_students_btn"
+              onClick={() => navigate('/admin/students')}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition shadow-xs hover:scale-[1.01]"
             >
-              <HelpCircle className="w-4 h-4" />
-              <span>Exam Questions Bank</span>
+              <Users className="w-4 h-4" />
+              <span>Manage Students &amp; Results</span>
+            </button>
+            <button
+              type="button"
+              id="admin_dash_add_questions_btn"
+              onClick={() => navigate('/admin/questions')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold border border-stone-300 transition shadow-xs"
+            >
+              <HelpCircle className="w-4 h-4 text-emerald-800" />
+              <span>Exam Questions</span>
             </button>
             <button
               type="button"
@@ -92,7 +101,7 @@ export const AdminDashboardPage: React.FC = () => {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold border border-stone-300 transition shadow-xs"
             >
               <Plus className="w-4 h-4 text-emerald-800" />
-              <span>Create / Manage Exams</span>
+              <span>Manage Exams</span>
             </button>
             <button
               type="button"
@@ -130,10 +139,14 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
 
               {/* Stat 2: Registered Candidates */}
-              <div id="stat_card_candidates" className="bg-white border border-stone-200 rounded-2xl p-5 shadow-xs relative overflow-hidden">
+              <div
+                id="stat_card_candidates"
+                onClick={() => navigate('/admin/students')}
+                className="bg-white border border-stone-200 hover:border-emerald-700 cursor-pointer rounded-2xl p-5 shadow-xs relative overflow-hidden transition group"
+              >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-stone-500">Registered Candidates</span>
-                  <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-300 flex items-center justify-center text-teal-800">
+                  <span className="text-xs font-bold text-stone-500 group-hover:text-emerald-900 transition">Registered Candidates</span>
+                  <div className="w-9 h-9 rounded-xl bg-teal-50 group-hover:bg-emerald-100 border border-teal-300 flex items-center justify-center text-teal-800 group-hover:text-emerald-900 transition">
                     <Users className="w-4 h-4" />
                   </div>
                 </div>
@@ -141,7 +154,7 @@ export const AdminDashboardPage: React.FC = () => {
                   {stats.totalCandidatesCount}
                 </div>
                 <p className="text-[11px] text-teal-800 font-bold flex items-center gap-1 font-mono">
-                  <span>{stats.activeLiveExamsNow} active exam sessions</span>
+                  <span>Manage roster &amp; results &rarr;</span>
                 </p>
               </div>
 
