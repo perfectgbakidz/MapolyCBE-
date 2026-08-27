@@ -19,13 +19,19 @@ import {
   Send,
   HelpCircle,
   Code2,
+  ShieldAlert,
+  Shield,
+  AlertOctagon,
+  Lock,
 } from 'lucide-react';
+
+const MAX_TAB_SWITCH_STRIKES = 3;
 
 export const TakeExamPage: React.FC = () => {
   const { navigate } = useRouter();
   const params = useParams();
   const { candidateUser } = useAuth();
-  const { warning, error, info } = useToast();
+  const { warning, error, info, success } = useToast();
   const examId = params.examId;
 
   const [exam, setExam] = useState<Exam | null>(null);
@@ -44,9 +50,27 @@ export const TakeExamPage: React.FC = () => {
   // Submission modal state
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitReason, setSubmitReason] = useState<string | null>(null);
   const [tabSwitchCount, setTabSwitchCount] = useState<number>(0);
+  const [strikeWarningModalStrike, setStrikeWarningModalStrike] = useState<number | null>(null);
 
-  // Question timer
+  // Refs to avoid stale closures in event listeners & timer callbacks
+  const answersRef = useRef<Record<string, AnswerRecord>>({});
+  answersRef.current = answers;
+
+  const examRef = useRef<Exam | null>(null);
+  examRef.current = exam;
+
+  const candidateUserRef = useRef(candidateUser);
+  candidateUserRef.current = candidateUser;
+
+  const isSubmittingRef = useRef<boolean>(false);
+  isSubmittingRef.current = isSubmitting;
+
+  const tabSwitchCountRef = useRef<number>(0);
+  tabSwitchCountRef.current = tabSwitchCount;
+
+  const lastFocusLossTimestampRef = useRef<number>(0);
   const questionStartTimeRef = useRef<number>(Date.now());
 
   // Initialize or restore session
@@ -67,7 +91,9 @@ export const TakeExamPage: React.FC = () => {
         if (sessionData.answers) {
           setAnswers(sessionData.answers);
         }
-        setTabSwitchCount(sessionData.tabSwitchCount || 0);
+        const initialCount = sessionData.tabSwitchCount || 0;
+        setTabSwitchCount(initialCount);
+        tabSwitchCountRef.current = initialCount;
       } catch (err: unknown) {
         if (err instanceof ApiError && err.status === 403) {
           error('Access Denied', "You don't have access to this exam.");
@@ -88,30 +114,110 @@ export const TakeExamPage: React.FC = () => {
     };
   }, [examId, candidateUser, navigate, error]);
 
-  // Tab switch & Window focus detection
-  useEffect(() => {
-    if (!examId || !candidateUser || isSubmitting) return;
+  /**
+   * Submit Exam (Grades responses, computes final receipt)
+   */
+  const handleConfirmSubmit = useCallback(async (forcedReason?: string) => {
+    const currentExam = examRef.current;
+    const currentCandidate = candidateUserRef.current;
+    if (!currentExam || !currentCandidate || isSubmittingRef.current) return;
 
-    const handleVisibilityChange = async () => {
-      if (document.hidden) {
-        try {
-          const count = await apiClient.recordTabSwitch(examId, candidateUser.id);
-          setTabSwitchCount(count);
-          warning(
-            'Security Warning: Window Focus Lost',
-            `Tab switch detected (Violation #${count}). All focus events are recorded on the proctoring log.`
-          );
-        } catch {
-          // quiet
+    setIsSubmitting(true);
+    isSubmittingRef.current = true;
+    if (forcedReason) setSubmitReason(forcedReason);
+
+    try {
+      const currentAnswers = answersRef.current;
+      const answersMap: Record<string, { selectedOptionId: string; markedForReview: boolean; timeSpent: number }> = {};
+      (Object.values(currentAnswers) as AnswerRecord[]).forEach((a) => {
+        if (a.selectedOptionId) {
+          answersMap[a.questionId] = {
+            selectedOptionId: a.selectedOptionId,
+            markedForReview: a.markedForReview,
+            timeSpent: a.timeSpentSeconds || 10,
+          };
         }
+      });
+
+      const result = await apiClient.submitExam(
+        currentExam.id,
+        currentCandidate,
+        answersMap,
+        tabSwitchCountRef.current
+      );
+
+      navigate(`/exam/${currentExam.id}/submitted?receipt=${encodeURIComponent(result.receiptChecksum)}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to finalize submission';
+      error('Submission Error', msg);
+      setIsSubmitting(false);
+      isSubmittingRef.current = false;
+      setSubmitReason(null);
+    }
+  }, [navigate, error]);
+
+  // Tab switch & Window focus detection with 3-Strike Limit
+  useEffect(() => {
+    if (!examId || !candidateUser) return;
+
+    const handleFocusLoss = async () => {
+      if (isSubmittingRef.current) return;
+
+      const now = Date.now();
+      // Debounce focus loss events within 1.5s to prevent double-firing from blur + visibilitychange
+      if (now - lastFocusLossTimestampRef.current < 1500) {
+        return;
+      }
+      lastFocusLossTimestampRef.current = now;
+
+      try {
+        const count = await apiClient.recordTabSwitch(examId, candidateUser.id);
+        setTabSwitchCount(count);
+        tabSwitchCountRef.current = count;
+
+        if (count === 1) {
+          warning(
+            'Anti-Cheat Warning (Strike 1 of 3)',
+            'Window focus lost or tab switched. You have 2 strikes remaining before automatic submission.'
+          );
+          setStrikeWarningModalStrike(1);
+        } else if (count === 2) {
+          warning(
+            'FINAL WARNING (Strike 2 of 3)',
+            'Critical proctoring alert! 1 more tab switch or window loss will trigger immediate exam auto-submission!'
+          );
+          setStrikeWarningModalStrike(2);
+        } else if (count >= MAX_TAB_SWITCH_STRIKES) {
+          error(
+            'Strike Limit Reached (3 of 3)',
+            'Maximum allowed window deviations exceeded. Automatically sealing and submitting exam...'
+          );
+          setStrikeWarningModalStrike(null);
+          handleConfirmSubmit('ANTI_CHEAT_STRIKE_LIMIT');
+        }
+      } catch {
+        // quiet
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        handleFocusLoss();
+      }
     };
-  }, [examId, candidateUser, isSubmitting, warning]);
+
+    const onWindowBlur = () => {
+      handleFocusLoss();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('blur', onWindowBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('blur', onWindowBlur);
+    };
+  }, [examId, candidateUser, warning, error, handleConfirmSubmit]);
 
   const currentQuestion: Question | undefined = exam?.questions?.[currentIndex];
 
@@ -252,52 +358,18 @@ export const TakeExamPage: React.FC = () => {
   };
 
   /**
-   * Submit Exam (Grades responses, computes final receipt)
-   */
-  const handleConfirmSubmit = async () => {
-    if (!exam || !candidateUser) return;
-    setIsSubmitting(true);
-
-    try {
-      const answersMap: Record<string, { selectedOptionId: string; markedForReview: boolean; timeSpent: number }> = {};
-      (Object.values(answers) as AnswerRecord[]).forEach((a) => {
-        if (a.selectedOptionId) {
-          answersMap[a.questionId] = {
-            selectedOptionId: a.selectedOptionId,
-            markedForReview: a.markedForReview,
-            timeSpent: a.timeSpentSeconds || 10,
-          };
-        }
-      });
-
-      const result = await apiClient.submitExam(
-        exam.id,
-        candidateUser,
-        answersMap,
-        tabSwitchCount
-      );
-
-      navigate(`/exam/${exam.id}/submitted?receipt=${encodeURIComponent(result.receiptChecksum)}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to finalize submission';
-      error('Submission Error', msg);
-      setIsSubmitting(false);
-    }
-  };
-
-  /**
    * Auto submit when timer runs out
    */
   const handleTimeExpire = useCallback(() => {
     warning('Time Limit Reached', 'The allotted duration has elapsed. Auto-sealing your responses now...');
-    handleConfirmSubmit();
-  }, []);
+    handleConfirmSubmit('TIME_EXPIRED');
+  }, [handleConfirmSubmit, warning]);
 
   // Keyboard shortcut listener (1-4 or A-D to choose option, Arrows for next/prev)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if inside an input or modal is open
-      if (isSubmitModalOpen || isSubmitting) return;
+      if (isSubmitModalOpen || isSubmitting || strikeWarningModalStrike !== null) return;
 
       if (e.key === 'ArrowRight') {
         if (exam?.questions && currentIndex < exam.questions.length - 1) {
@@ -320,7 +392,7 @@ export const TakeExamPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, exam, isSubmitModalOpen, isSubmitting, handleSelectOption]);
+  }, [currentIndex, exam, isSubmitModalOpen, isSubmitting, strikeWarningModalStrike, handleSelectOption]);
 
   if (isLoading || !exam || !session) {
     return (
@@ -361,8 +433,37 @@ export const TakeExamPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Center/Right: Live Sync Status, Timer, Submit */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          {/* Center/Right: Anti-Cheat Badge, Live Sync Status, Timer, Submit */}
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Anti-cheat status pill */}
+            <div
+              id="anti_cheat_status_badge"
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold border transition ${
+                tabSwitchCount === 0
+                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                  : tabSwitchCount === 1
+                  ? 'bg-amber-50 text-amber-900 border-amber-300 animate-pulse'
+                  : 'bg-rose-50 text-rose-900 border-rose-300 animate-bounce'
+              }`}
+            >
+              {tabSwitchCount === 0 ? (
+                <>
+                  <Shield className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Proctoring: 0/{MAX_TAB_SWITCH_STRIKES} Strikes</span>
+                </>
+              ) : tabSwitchCount === 1 ? (
+                <>
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Strike 1/{MAX_TAB_SWITCH_STRIKES} (Warning)</span>
+                </>
+              ) : (
+                <>
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-700" />
+                  <span>Strike 2/{MAX_TAB_SWITCH_STRIKES} (FINAL WARNING)</span>
+                </>
+              )}
+            </div>
+
             <AutoSaveIndicator
               status={saveStatus}
               lastSavedAt={lastSavedAt}
@@ -371,7 +472,7 @@ export const TakeExamPage: React.FC = () => {
               errorMessage={saveErrorMsg}
             />
 
-            <div className="w-36 sm:w-44">
+            <div className="w-32 sm:w-44">
               <CountdownTimer
                 expiresAt={session.expiresAt}
                 durationMinutes={exam.durationMinutes}
@@ -383,7 +484,8 @@ export const TakeExamPage: React.FC = () => {
               type="button"
               id="submit_exam_header_btn"
               onClick={() => setIsSubmitModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition"
+              disabled={isSubmitting}
+              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Finish &amp; Submit</span>
@@ -393,12 +495,39 @@ export const TakeExamPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Tab Switch Alert Banner (if any detected) */}
-      {tabSwitchCount > 0 && (
-        <div className="bg-amber-50 border-b border-amber-300 text-amber-900 text-xs px-4 py-2 text-center flex items-center justify-center gap-2 animate-fadeIn font-semibold">
-          <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+      {/* Dynamic Anti-Cheat Proctoring Alert Banner */}
+      {tabSwitchCount === 1 && (
+        <div
+          id="strike_warning_banner_1"
+          className="bg-amber-500 text-stone-950 font-medium text-xs px-4 py-2.5 text-center flex items-center justify-center gap-2 border-b border-amber-600 shadow-xs"
+        >
+          <AlertTriangle className="w-4 h-4 text-stone-950 shrink-0" />
           <span>
-            Proctoring Notice: <strong>{tabSwitchCount} window focus deviation(s)</strong> logged on your record. Stay on this screen.
+            <strong>Anti-Cheat Strike 1 of 3:</strong> Window focus loss or tab switch detected. You have <strong>2 strikes remaining</strong> before your examination is automatically locked and submitted.
+          </span>
+        </div>
+      )}
+
+      {tabSwitchCount === 2 && (
+        <div
+          id="strike_warning_banner_2"
+          className="bg-rose-600 text-white font-bold text-xs px-4 py-2.5 text-center flex items-center justify-center gap-2 border-b border-rose-700 animate-pulse shadow-xs"
+        >
+          <ShieldAlert className="w-4 h-4 text-white shrink-0" />
+          <span>
+            <strong>CRITICAL WARNING (Strike 2 of 3):</strong> Any further tab switch, window minimization, or loss of focus will trigger <strong>IMMEDIATE AUTOMATIC SUBMISSION</strong>!
+          </span>
+        </div>
+      )}
+
+      {tabSwitchCount >= MAX_TAB_SWITCH_STRIKES && (
+        <div
+          id="strike_warning_banner_3"
+          className="bg-stone-900 text-rose-300 font-bold text-xs px-4 py-3 text-center flex items-center justify-center gap-2 border-b border-stone-800"
+        >
+          <Lock className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>
+            <strong>STRIKE LIMIT EXCEEDED (3 of 3):</strong> Exam is locked due to proctoring policy violation. Automatically submitting all answers...
           </span>
         </div>
       )}
@@ -602,11 +731,20 @@ export const TakeExamPage: React.FC = () => {
               <span className="font-mono text-rose-700 font-bold">{totalQuestions - answeredCount}</span>
             </div>
 
+            {/* Anti-cheat status in summary box */}
+            <div className="pt-2 border-t border-stone-200 flex justify-between items-center text-[11px]">
+              <span className="text-stone-500">Proctoring Violations:</span>
+              <span className={`font-mono font-bold ${tabSwitchCount > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>
+                {tabSwitchCount} / {MAX_TAB_SWITCH_STRIKES} Strikes
+              </span>
+            </div>
+
             <button
               type="button"
               id="sidebar_submit_exam_btn"
               onClick={() => setIsSubmitModalOpen(true)}
-              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs transition shadow-xs"
+              disabled={isSubmitting}
+              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs transition shadow-xs disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5" />
               Submit Examination
@@ -614,6 +752,99 @@ export const TakeExamPage: React.FC = () => {
           </div>
         </aside>
       </main>
+
+      {/* Strike Warning Interstitial Modal (For Strikes 1 & 2) */}
+      {strikeWarningModalStrike !== null && (
+        <div className="fixed inset-0 z-50 bg-stone-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div
+            id="strike_warning_acknowledgment_modal"
+            className="w-full max-w-md bg-white border border-stone-200 rounded-2xl p-6 sm:p-7 shadow-2xl space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+                  strikeWarningModalStrike === 1
+                    ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                    : 'bg-rose-100 text-rose-800 border border-rose-300 animate-pulse'
+                }`}
+              >
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-stone-900">
+                  {strikeWarningModalStrike === 1
+                    ? 'Anti-Cheat Warning (Strike 1 of 3)'
+                    : 'FINAL WARNING (Strike 2 of 3)'}
+                </h3>
+                <p className="text-xs text-stone-500 font-mono">Window Focus Loss Detected</p>
+              </div>
+            </div>
+
+            <div
+              className={`p-3.5 rounded-xl border text-xs leading-relaxed font-medium ${
+                strikeWarningModalStrike === 1
+                  ? 'bg-amber-50 border-amber-200 text-amber-900'
+                  : 'bg-rose-50 border-rose-200 text-rose-950 font-semibold'
+              }`}
+            >
+              {strikeWarningModalStrike === 1 ? (
+                <p>
+                  You navigated away from the exam window or switched tabs. You now have{' '}
+                  <strong>2 strikes remaining</strong>. If you switch tabs 2 more times, the system will{' '}
+                  <strong>automatically submit and lock your exam immediately</strong>.
+                </p>
+              ) : (
+                <p>
+                  <strong>This is your final warning!</strong> You have accumulated 2 strikes. Switching tabs, minimizing the browser, or opening another application one more time will{' '}
+                  <strong>instantly force-submit and terminate your examination</strong>.
+                </p>
+              )}
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                id="btn_acknowledge_strike_warning"
+                onClick={() => setStrikeWarningModalStrike(null)}
+                className={`w-full py-3 px-4 rounded-xl text-white font-bold text-xs shadow-xs transition ${
+                  strikeWarningModalStrike === 1
+                    ? 'bg-amber-700 hover:bg-amber-800'
+                    : 'bg-rose-700 hover:bg-rose-800'
+                }`}
+              >
+                I Understand &amp; Resume Examination
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auto-Submitting Lock Overlay (for Strike 3 or Expired time) */}
+      {isSubmitting && submitReason && (
+        <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white rounded-2xl p-8 text-center shadow-2xl border border-stone-200 space-y-4 animate-fadeIn">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-800 border border-rose-300 flex items-center justify-center mx-auto shadow-xs">
+              <Lock className="w-7 h-7 animate-pulse" />
+            </div>
+            <h3 className="text-lg font-black text-stone-900">
+              {submitReason === 'ANTI_CHEAT_STRIKE_LIMIT'
+                ? 'Exam Terminated & Auto-Submitted'
+                : 'Submitting Examination Responses'}
+            </h3>
+            <p className="text-xs text-stone-600 font-medium leading-relaxed">
+              {submitReason === 'ANTI_CHEAT_STRIKE_LIMIT'
+                ? 'Maximum tab switch violations (3 of 3 strikes) reached. All saved responses are being sealed and graded...'
+                : 'Session duration expired. Finalizing answer receipt and calculating score...'}
+            </p>
+            <div className="pt-2 flex justify-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-100 text-stone-600 text-xs font-mono font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
+                <span>Encrypting &amp; submitting...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Final Submit Confirmation Modal */}
       <ConfirmSubmitModal
@@ -623,7 +854,7 @@ export const TakeExamPage: React.FC = () => {
         flaggedCount={flaggedCount}
         isSubmitting={isSubmitting}
         onCancel={() => setIsSubmitModalOpen(false)}
-        onConfirm={handleConfirmSubmit}
+        onConfirm={() => handleConfirmSubmit()}
       />
     </div>
   );

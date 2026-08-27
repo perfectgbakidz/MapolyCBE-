@@ -107,10 +107,10 @@ export const ExamInstructionsPage: React.FC = () => {
 
   const standardRules = [
     'Do not refresh the browser or click the back button during the examination.',
-    'Do not navigate away from this tab or minimize the browser window. Tab switches are logged.',
-    'Answers save automatically in real-time on every selection without needing manual confirmation.',
+    'Anti-Cheat 3-Strike Policy: Do not switch tabs, minimize the browser, or open other windows. Tab deviations are logged. On the 3rd strike, your examination will automatically submit and lock immediately.',
+    'Answers save automatically in real-time on every selection with cryptographic checksum verification.',
     'You can navigate freely between questions and flag questions for review before submitting.',
-    'The examination will automatically submit when the countdown timer reaches 00:00:00.',
+    'The examination will automatically seal and submit when the countdown timer reaches 00:00:00.',
     'Ensure you have a stable network connection before starting.',
   ];
 
@@ -234,7 +234,7 @@ export const ExamInstructionsPage: React.FC = () => {
                 <ShieldAlert className="w-4 h-4 text-amber-700" />
                 Focus Proctoring:
               </span>
-              <span className="text-amber-800 font-bold">Window Visibility Logging</span>
+              <span className="text-amber-800 font-bold">Active (3-Strike Auto-Submit)</span>
             </div>
           </div>
 
