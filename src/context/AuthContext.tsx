@@ -1,14 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Role, AcademicLevel } from '../types';
+import { User, Role, AcademicLevel, ParentUser, ParentRegisterPayload, ChildMatch } from '../types';
 import { apiClient } from '../services/apiClient';
 
 const CANDIDATE_TOKEN_KEY = 'mapolycbe_candidate_token_v1';
 const CANDIDATE_USER_KEY = 'mapolycbe_candidate_user_v1';
 const ADMIN_TOKEN_KEY = 'mapolycbe_admin_token_v1';
 const ADMIN_USER_KEY = 'mapolycbe_admin_user_v1';
+const PARENT_TOKEN_KEY = 'mapolycbe_parent_token_v1';
+const PARENT_USER_KEY = 'mapolycbe_parent_user_v1';
 
 interface AuthContextType {
-  user: User | null;
+  user: User | ParentUser | null;
   role: Role | null;
   token: string | null;
   isAuthenticated: boolean;
@@ -17,11 +19,13 @@ interface AuthContextType {
   // Specific role states
   candidateUser: User | null;
   adminUser: User | null;
+  parentUser: ParentUser | null;
   candidateToken: string | null;
   adminToken: string | null;
+  parentToken: string | null;
 
   // Actions
-  login: (token: string, user: User, role?: Role) => void;
+  login: (token: string, user: User | ParentUser, role?: Role) => void;
   loginCandidate: (matricNoOrEmail: string, password?: string) => Promise<User>;
   registerCandidate: (data: {
     matric_no?: string;
@@ -34,8 +38,11 @@ interface AuthContextType {
     department?: string;
   }) => Promise<User>;
   loginAdmin: (usernameOrEmail: string, password?: string) => Promise<User>;
+  loginParent: (identifier: string, password?: string) => Promise<ParentUser>;
+  registerParent: (data: ParentRegisterPayload) => Promise<{ user: ParentUser; children: ChildMatch[] }>;
   logoutCandidate: () => void;
   logoutAdmin: () => void;
+  logoutParent: () => void;
   logout: () => void;
   switchActiveRole: (targetRole: Role | null) => void;
 }
@@ -49,7 +56,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [adminUser, setAdminUser] = useState<User | null>(null);
   const [adminToken, setAdminToken] = useState<string | null>(null);
 
-  // Active viewing context (defaults to candidate if logged in, or admin if on admin routes)
+  const [parentUser, setParentUser] = useState<ParentUser | null>(null);
+  const [parentToken, setParentToken] = useState<string | null>(null);
+
+  // Active viewing context (defaults to candidate if logged in, or admin/parent depending on route)
   const [activeRole, setActiveRole] = useState<Role | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -70,12 +80,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAdminUser(JSON.parse(storedAdminUser));
       }
 
+      const storedParentToken = localStorage.getItem(PARENT_TOKEN_KEY);
+      const storedParentUser = localStorage.getItem(PARENT_USER_KEY);
+      if (storedParentToken && storedParentUser) {
+        setParentToken(storedParentToken);
+        setParentUser(JSON.parse(storedParentUser));
+      }
+
       // Check current route to determine primary active role
       const currentPath = window.location.pathname;
       if (currentPath.startsWith('/admin') && storedAdminToken) {
         setActiveRole('admin');
+      } else if (currentPath.startsWith('/parent') && storedParentToken) {
+        setActiveRole('parent');
       } else if (storedCandToken) {
         setActiveRole('candidate');
+      } else if (storedParentToken) {
+        setActiveRole('parent');
       } else if (storedAdminToken) {
         setActiveRole('admin');
       } else {
@@ -88,16 +109,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = (token: string, user: User, role?: Role) => {
+  const login = (token: string, user: User | ParentUser, role?: Role) => {
     const targetRole = role || user.role || 'candidate';
     if (targetRole === 'admin') {
-      setAdminUser(user);
+      setAdminUser(user as User);
       setAdminToken(token);
       setActiveRole('admin');
       localStorage.setItem(ADMIN_TOKEN_KEY, token);
       localStorage.setItem(ADMIN_USER_KEY, JSON.stringify(user));
+    } else if (targetRole === 'parent') {
+      setParentUser(user as ParentUser);
+      setParentToken(token);
+      setActiveRole('parent');
+      localStorage.setItem(PARENT_TOKEN_KEY, token);
+      localStorage.setItem(PARENT_USER_KEY, JSON.stringify(user));
     } else {
-      setCandidateUser(user);
+      setCandidateUser(user as User);
       setCandidateToken(token);
       setActiveRole('candidate');
       localStorage.setItem(CANDIDATE_TOKEN_KEY, token);
@@ -152,13 +179,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return res.user;
   };
 
+  const loginParent = async (identifier: string, password?: string): Promise<ParentUser> => {
+    const res = await apiClient.loginParent(identifier, password);
+    setParentUser(res.user);
+    setParentToken(res.token);
+    setActiveRole('parent');
+    localStorage.setItem(PARENT_TOKEN_KEY, res.token);
+    localStorage.setItem(PARENT_USER_KEY, JSON.stringify(res.user));
+    return res.user;
+  };
+
+  const registerParent = async (data: ParentRegisterPayload): Promise<{ user: ParentUser; children: ChildMatch[] }> => {
+    const res = await apiClient.registerParent(data);
+    setParentUser(res.user);
+    setParentToken(res.token);
+    setActiveRole('parent');
+    localStorage.setItem(PARENT_TOKEN_KEY, res.token);
+    localStorage.setItem(PARENT_USER_KEY, JSON.stringify(res.user));
+    return { user: res.user, children: res.children };
+  };
+
   const logoutCandidate = () => {
     setCandidateUser(null);
     setCandidateToken(null);
     localStorage.removeItem(CANDIDATE_TOKEN_KEY);
     localStorage.removeItem(CANDIDATE_USER_KEY);
     if (activeRole === 'candidate') {
-      setActiveRole(adminToken ? 'admin' : null);
+      setActiveRole(parentToken ? 'parent' : adminToken ? 'admin' : null);
     }
   };
 
@@ -168,13 +215,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem(ADMIN_TOKEN_KEY);
     localStorage.removeItem(ADMIN_USER_KEY);
     if (activeRole === 'admin') {
-      setActiveRole(candidateToken ? 'candidate' : null);
+      setActiveRole(candidateToken ? 'candidate' : parentToken ? 'parent' : null);
+    }
+  };
+
+  const logoutParent = () => {
+    setParentUser(null);
+    setParentToken(null);
+    localStorage.removeItem(PARENT_TOKEN_KEY);
+    localStorage.removeItem(PARENT_USER_KEY);
+    if (activeRole === 'parent') {
+      setActiveRole(candidateToken ? 'candidate' : adminToken ? 'admin' : null);
     }
   };
 
   const logout = () => {
     if (activeRole === 'admin') {
       logoutAdmin();
+    } else if (activeRole === 'parent') {
+      logoutParent();
     } else {
       logoutCandidate();
     }
@@ -185,8 +244,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Derive current active user and token based on activeRole
-  const currentUser = activeRole === 'admin' ? adminUser : activeRole === 'candidate' ? candidateUser : null;
-  const currentToken = activeRole === 'admin' ? adminToken : activeRole === 'candidate' ? candidateToken : null;
+  const currentUser =
+    activeRole === 'admin'
+      ? adminUser
+      : activeRole === 'parent'
+      ? parentUser
+      : activeRole === 'candidate'
+      ? candidateUser
+      : null;
+
+  const currentToken =
+    activeRole === 'admin'
+      ? adminToken
+      : activeRole === 'parent'
+      ? parentToken
+      : activeRole === 'candidate'
+      ? candidateToken
+      : null;
+
   const isAuthenticated = Boolean(currentToken && currentUser);
 
   return (
@@ -199,14 +274,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isLoading,
         candidateUser,
         adminUser,
+        parentUser,
         candidateToken,
         adminToken,
+        parentToken,
         login,
         loginCandidate,
         registerCandidate,
         loginAdmin,
+        loginParent,
+        registerParent,
         logoutCandidate,
         logoutAdmin,
+        logoutParent,
         logout,
         switchActiveRole,
       }}

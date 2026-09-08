@@ -9,15 +9,21 @@ import {
   LogOut,
   LogIn,
   UserPlus,
+  Users,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { currentPath, navigate } = useRouter();
-  const { candidateUser, candidateToken, logoutCandidate } = useAuth();
+  const { candidateUser, candidateToken, logoutCandidate, parentUser, parentToken, logoutParent } = useAuth();
 
-  const handleLogout = () => {
+  const handleCandidateLogout = () => {
     logoutCandidate();
     navigate('/login');
+  };
+
+  const handleParentLogout = () => {
+    logoutParent();
+    navigate('/parent/login');
   };
 
   return (
@@ -90,6 +96,25 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
             )}
+
+            {/* Parent Nav Links */}
+            {parentToken && !candidateToken && (
+              <div className="hidden md:flex items-center gap-1 ml-4 pl-4 border-l border-stone-200">
+                <button
+                  type="button"
+                  id="nav_link_parent_dashboard"
+                  onClick={() => navigate('/parent/dashboard')}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                    currentPath.startsWith('/parent')
+                      ? 'bg-indigo-50 text-indigo-800 border border-indigo-200 font-bold'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                >
+                  <Users className="w-4 h-4 text-indigo-700" />
+                  Wards & Results
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Right Actions */}
@@ -106,15 +131,47 @@ export const Navbar: React.FC = () => {
                 <button
                   type="button"
                   id="candidate_logout_btn"
-                  onClick={handleLogout}
+                  onClick={handleCandidateLogout}
                   className="p-2 rounded-lg text-stone-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition"
                   title="Log out candidate"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
+            ) : parentToken && parentUser ? (
+              <div className="flex items-center gap-3 pl-2">
+                <div className="hidden sm:flex flex-col text-right">
+                  <span className="text-xs font-bold text-stone-900">{parentUser.full_name}</span>
+                  <span className="text-[10px] font-semibold text-indigo-700">Guardian Portal</span>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-indigo-700 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                  {parentUser.full_name.charAt(0)}
+                </div>
+                <button
+                  type="button"
+                  id="parent_logout_nav_btn"
+                  onClick={handleParentLogout}
+                  className="p-2 rounded-lg text-stone-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition"
+                  title="Log out parent session"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             ) : (
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  id="nav_parent_portal_btn"
+                  onClick={() => navigate('/parent/login')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                    currentPath.startsWith('/parent')
+                      ? 'bg-indigo-50 text-indigo-800 border border-indigo-200'
+                      : 'text-indigo-700 hover:text-indigo-900 hover:bg-indigo-50/60'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  Parent Portal
+                </button>
                 <button
                   type="button"
                   id="nav_login_btn"

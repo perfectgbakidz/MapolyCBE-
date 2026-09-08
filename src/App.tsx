@@ -23,6 +23,9 @@ import { AdminManageExamsPage } from './pages/AdminManageExamsPage';
 import { AdminManageQuestionsPage } from './pages/AdminManageQuestionsPage';
 import { AdminQuestionBankPage } from './pages/AdminQuestionBankPage';
 import { AdminSecurityMonitoringPage } from './pages/AdminSecurityMonitoringPage';
+import { ParentLoginPage } from './pages/ParentLoginPage';
+import { ParentRegisterPage } from './pages/ParentRegisterPage';
+import { ParentDashboardPage } from './pages/ParentDashboardPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 const AppRoutes: React.FC = () => {
@@ -31,6 +34,25 @@ const AppRoutes: React.FC = () => {
   // 1. Landing
   if (currentPath === '/') {
     return <LandingPage />;
+  }
+
+  // 1.1 Parent Registration
+  if (currentPath === '/parent/register') {
+    return <ParentRegisterPage />;
+  }
+
+  // 1.2 Parent Login
+  if (currentPath === '/parent/login' || currentPath === '/parent-login') {
+    return <ParentLoginPage />;
+  }
+
+  // 1.3 Parent Dashboard
+  if (currentPath === '/parent/dashboard' || currentPath === '/parent') {
+    return (
+      <ProtectedRoute role="parent" redirectTo="/parent/login">
+        <ParentDashboardPage />
+      </ProtectedRoute>
+    );
   }
 
   // 2. Candidate Registration

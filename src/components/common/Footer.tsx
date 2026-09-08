@@ -41,6 +41,15 @@ export const Footer: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               type="button"
+              id="footer_link_parent"
+              onClick={() => navigate('/parent/login')}
+              className="text-indigo-700 hover:text-indigo-900 font-semibold transition"
+            >
+              Parent Portal
+            </button>
+            <span className="text-stone-300">•</span>
+            <button
+              type="button"
               id="footer_link_register"
               onClick={() => navigate('/register')}
               className="text-emerald-800 hover:text-emerald-900 font-semibold transition"

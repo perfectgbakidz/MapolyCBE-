@@ -17,6 +17,12 @@ import {
   CandidateAdminDetail,
   CandidateUpdate,
   StudentResultWithExam,
+  ParentUser,
+  ChildMatch,
+  ParentRegisterPayload,
+  ChildSummary,
+  ChildExamStatus,
+  ChildResultWithExam,
 } from '../types';
 import {
   authApi,
@@ -26,6 +32,7 @@ import {
   securityApi,
   healthApi,
   studentsApi,
+  parentApi,
 } from '../api/client';
 
 export class ApiError extends Error {
@@ -40,12 +47,14 @@ export class ApiError extends Error {
   }
 }
 
-// Storage keys for candidate and admin isolation
+// Storage keys for candidate, admin, and parent isolation
 const STORAGE_KEYS = {
   CANDIDATE_AUTH_TOKEN: 'mapolycbe_candidate_token_v1',
   ADMIN_AUTH_TOKEN: 'mapolycbe_admin_token_v1',
+  PARENT_AUTH_TOKEN: 'mapolycbe_parent_token_v1',
   CANDIDATE_USER: 'mapolycbe_candidate_user_v1',
   ADMIN_USER: 'mapolycbe_admin_user_v1',
+  PARENT_USER: 'mapolycbe_parent_user_v1',
 };
 
 function decodeJwtSub(token?: string | null): string {
@@ -67,6 +76,10 @@ class LiveApiClient {
 
   private getAdminToken(): string | null {
     return localStorage.getItem(STORAGE_KEYS.ADMIN_AUTH_TOKEN);
+  }
+
+  private getParentToken(): string | null {
+    return localStorage.getItem(STORAGE_KEYS.PARENT_AUTH_TOKEN);
   }
 
   private rethrow(err: any): never {
@@ -197,6 +210,92 @@ class LiveApiClient {
       };
 
       return { token: res.access_token, user };
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // AUTHENTICATION & DATA: PARENT / GUARDIAN PORTAL
+  // -------------------------------------------------------------
+
+  public async registerParent(data: ParentRegisterPayload): Promise<{
+    token: string;
+    user: ParentUser;
+    children: ChildMatch[];
+  }> {
+    try {
+      const res = await authApi.parentRegister({
+        full_name: data.full_name.trim(),
+        address: data.address.trim(),
+        phone_number: data.phone_number.trim(),
+        password: data.password,
+        children_names: data.children_names.map((n) => n.trim()).filter(Boolean),
+      });
+
+      const user: ParentUser = {
+        id: decodeJwtSub(res.access_token) || data.phone_number,
+        full_name: data.full_name,
+        phone_number: data.phone_number,
+        address: data.address,
+        role: 'parent',
+        children: res.children,
+      };
+
+      return { token: res.access_token, user, children: res.children };
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async loginParent(
+    identifier: string,
+    password?: string
+  ): Promise<{ token: string; user: ParentUser }> {
+    try {
+      const res = await authApi.parentLogin({
+        identifier: identifier.trim(),
+        password: password || '',
+      });
+
+      const user: ParentUser = {
+        id: decodeJwtSub(res.access_token) || identifier,
+        full_name: 'Parent / Guardian',
+        phone_number: identifier.trim(),
+        role: 'parent',
+      };
+
+      return { token: res.access_token, user };
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async getParentChildren(): Promise<ChildSummary[]> {
+    const token = this.getParentToken();
+    if (!token) throw new ApiError(401, 'Parent authentication required');
+    try {
+      return await parentApi.getChildren(token);
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async getChildExams(candidateId: string): Promise<ChildExamStatus[]> {
+    const token = this.getParentToken();
+    if (!token) throw new ApiError(401, 'Parent authentication required');
+    try {
+      return await parentApi.getChildExams(candidateId, token);
+    } catch (err: any) {
+      this.rethrow(err);
+    }
+  }
+
+  public async getChildResults(candidateId: string): Promise<ChildResultWithExam[]> {
+    const token = this.getParentToken();
+    if (!token) throw new ApiError(401, 'Parent authentication required');
+    try {
+      return await parentApi.getChildResults(candidateId, token);
     } catch (err: any) {
       this.rethrow(err);
     }

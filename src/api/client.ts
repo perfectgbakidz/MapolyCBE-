@@ -132,11 +132,16 @@ function mapFastApiErrors(details: Array<{ loc: string[]; msg: string }>): Recor
 function handleUnauthorizedSession() {
   const isCandidateRoute = window.location.pathname.startsWith('/exam') || window.location.pathname === '/dashboard' || window.location.pathname === '/results';
   const isAdminRoute = window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login';
+  const isParentRoute = window.location.pathname.startsWith('/parent') && window.location.pathname !== '/parent/login' && window.location.pathname !== '/parent/register';
 
   if (isAdminRoute) {
     localStorage.removeItem('mapolycbe_admin_token_v1');
     localStorage.removeItem('mapolycbe_admin_user_v1');
     window.location.href = '/admin/login';
+  } else if (isParentRoute) {
+    localStorage.removeItem('mapolycbe_parent_token_v1');
+    localStorage.removeItem('mapolycbe_parent_user_v1');
+    window.location.href = '/parent/login';
   } else if (isCandidateRoute) {
     localStorage.removeItem('mapolycbe_candidate_token_v1');
     localStorage.removeItem('mapolycbe_candidate_user_v1');
@@ -148,7 +153,18 @@ function handleUnauthorizedSession() {
  * 4.4 Endpoint reference helper modules
  */
 
-import { AcademicLevel, CandidateAdminView, CandidateAdminDetail, CandidateUpdate, StudentResultWithExam } from '../types';
+import {
+  AcademicLevel,
+  CandidateAdminView,
+  CandidateAdminDetail,
+  CandidateUpdate,
+  StudentResultWithExam,
+  ParentRegisterPayload,
+  ParentRegisterResponse,
+  ChildSummary,
+  ChildExamStatus,
+  ChildResultWithExam,
+} from '../types';
 
 // Auth Endpoints
 export const authApi = {
@@ -172,6 +188,18 @@ export const authApi = {
 
   adminLogin: (body: { identifier: string; password?: string }) =>
     apiRequest<{ access_token: string; token_type: string; role: 'admin'; user: any }>('/auth/admin/login', {
+      method: 'POST',
+      body,
+    }),
+
+  parentRegister: (body: ParentRegisterPayload) =>
+    apiRequest<ParentRegisterResponse>('/auth/parent/register', {
+      method: 'POST',
+      body,
+    }),
+
+  parentLogin: (body: { identifier: string; password?: string }) =>
+    apiRequest<{ access_token: string; token_type: string; role: 'parent' }>('/auth/parent/login', {
       method: 'POST',
       body,
     }),
@@ -380,3 +408,25 @@ export const studentsApi = {
       token,
     }),
 };
+
+// Parent / Guardian Portal Endpoints
+export const parentApi = {
+  getChildren: (token: string) =>
+    apiRequest<ChildSummary[]>('/parent/children', {
+      method: 'GET',
+      token,
+    }),
+
+  getChildExams: (candidateId: string, token: string) =>
+    apiRequest<ChildExamStatus[]>(`/parent/children/${candidateId}/exams`, {
+      method: 'GET',
+      token,
+    }),
+
+  getChildResults: (candidateId: string, token: string) =>
+    apiRequest<ChildResultWithExam[]>(`/parent/children/${candidateId}/results`, {
+      method: 'GET',
+      token,
+    }),
+};
+

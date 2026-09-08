@@ -1,6 +1,75 @@
-export type Role = 'candidate' | 'admin';
+export type Role = 'candidate' | 'admin' | 'parent';
 
 export type AcademicLevel = 'ND1' | 'ND2' | 'HND1_SWD' | 'HND1_NCC' | 'HND2_SWD' | 'HND2_NCC';
+
+// ==========================================
+// PARENT / GUARDIAN PORTAL TYPES
+// ==========================================
+export interface ParentUser {
+  id: string;
+  full_name: string;
+  phone_number: string;
+  address?: string;
+  role: 'parent';
+  children?: ChildMatch[];
+}
+
+export interface ChildMatch {
+  name_submitted: string;
+  matched: boolean;
+  candidate_id: string | null;
+  matric_no: string | null;
+}
+
+export interface ParentRegisterPayload {
+  full_name: string;
+  address: string;
+  phone_number: string;
+  password: string;
+  children_names: string[];
+}
+
+export interface ParentRegisterResponse {
+  access_token: string;
+  token_type: string;
+  role: string;
+  children: ChildMatch[];
+}
+
+export interface ChildSummary {
+  id: string;
+  matric_no: string;
+  full_name: string;
+  level: AcademicLevel;
+}
+
+export interface ChildExamStatus {
+  exam_id: string;
+  title: string;
+  course_id: string;
+  level: AcademicLevel;
+  duration_minutes: number;
+  is_active: boolean;
+  done: boolean;
+  result: {
+    id: string;
+    exam_id: string;
+    score: number;
+    total_questions: number;
+    submitted_at: string;
+    checksum: string;
+  } | null;
+}
+
+export interface ChildResultWithExam {
+  id: string;
+  exam_id: string;
+  score: number;
+  total_questions: number;
+  submitted_at: string;
+  checksum: string;
+  exam_title: string;
+}
 
 export const ACADEMIC_LEVELS: { value: AcademicLevel; label: string; group: 'ND' | 'HND' }[] = [
   { value: 'ND1', label: 'ND 1', group: 'ND' },
