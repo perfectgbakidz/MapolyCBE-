@@ -120,8 +120,17 @@ export const MyResultsPage: React.FC = () => {
                     {/* Score Metric Panel */}
                     <div className="grid grid-cols-3 gap-3 p-4 rounded-xl bg-stone-50 border border-stone-200 mb-6 text-center">
                       <div>
-                        <span className="text-[10px] uppercase tracking-wider text-stone-500 font-bold block mb-0.5">
-                          Final Score
+                        <span className="text-[10px] uppercase tracking-wider text-stone-600 font-bold block mb-0.5">
+                          Score (Correct)
+                        </span>
+                        <div className="font-mono text-2xl font-black text-stone-900">
+                          {res.score} <span className="text-sm font-bold text-stone-500">/ {res.totalScore}</span>
+                        </div>
+                      </div>
+
+                      <div className="border-x border-stone-200">
+                        <span className="text-[10px] uppercase tracking-wider text-stone-600 font-bold block mb-0.5">
+                          Percentage
                         </span>
                         <span
                           className={`font-mono text-2xl font-black ${
@@ -129,15 +138,6 @@ export const MyResultsPage: React.FC = () => {
                           }`}
                         >
                           {res.percentage}%
-                        </span>
-                      </div>
-
-                      <div className="border-x border-stone-200">
-                        <span className="text-[10px] uppercase tracking-wider text-stone-500 font-bold block mb-0.5">
-                          Points Earned
-                        </span>
-                        <span className="font-mono text-base font-bold text-stone-800">
-                          {res.score} / {res.totalScore}
                         </span>
                       </div>
 
@@ -213,8 +213,8 @@ export const MyResultsPage: React.FC = () => {
                   <span className="font-mono text-xs font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">
                     {selectedResult.examCode}
                   </span>
-                  <span className="text-xs text-stone-600 font-mono font-medium">
-                    Score: {selectedResult.percentage}% ({selectedResult.score}/{selectedResult.totalScore} Pts)
+                  <span className="text-xs text-stone-700 font-mono font-medium">
+                    Score: <strong className="text-stone-900 font-bold">{selectedResult.score} / {selectedResult.totalScore}</strong> ({selectedResult.percentage}%)
                   </span>
                 </div>
                 <h3 className="text-base font-bold text-stone-900">{selectedResult.examTitle}</h3>

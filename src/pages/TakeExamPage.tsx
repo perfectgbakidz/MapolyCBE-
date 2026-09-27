@@ -146,7 +146,9 @@ export const TakeExamPage: React.FC = () => {
         tabSwitchCountRef.current
       );
 
-      navigate(`/exam/${currentExam.id}/submitted?receipt=${encodeURIComponent(result.receiptChecksum)}`);
+      navigate(
+        `/exam/${currentExam.id}/submitted?receipt=${encodeURIComponent(result.receiptChecksum)}&score=${result.score}&total=${result.totalScore}&percentage=${result.percentage}`
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to finalize submission';
       error('Submission Error', msg);

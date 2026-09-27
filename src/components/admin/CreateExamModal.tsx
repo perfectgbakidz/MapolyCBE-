@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Exam, ExamStatus, Course, ACADEMIC_LEVEL_MAP, AcademicLevel } from '../../types';
 import { apiClient } from '../../services/apiClient';
+import { useToast } from '../../context/ToastContext';
 import { X, Plus, Trash2, Layers, AlertCircle, BookOpen, Loader2 } from 'lucide-react';
 
 interface CreateExamModalProps {
@@ -18,8 +19,10 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
   onExamCreated,
   initialExam,
 }) => {
+  const { success, error } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
+  const [isCreatingQuickCourse, setIsCreatingQuickCourse] = useState(false);
   const [courseId, setCourseId] = useState('');
 
   const [title, setTitle] = useState('');
@@ -48,6 +51,9 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
       try {
         const fetched = await apiClient.getCourses();
         setCourses(fetched);
+        if (fetched.length > 0 && !courseId && !initialExam) {
+          handleCourseChangeWithList(fetched[0].id, fetched);
+        }
       } catch (e) {
         console.error('Failed to load courses for exam creation modal:', e);
       } finally {
@@ -96,13 +102,10 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
     setValidationError(null);
   }, [initialExam, isOpen]);
 
-  if (!isOpen) return null;
-
-  const handleCourseChange = (selectedId: string) => {
+  const handleCourseChangeWithList = (selectedId: string, list: Course[]) => {
     setCourseId(selectedId);
-    const selectedCourse = courses.find((c) => c.id === selectedId);
+    const selectedCourse = list.find((c) => c.id === selectedId);
     if (selectedCourse) {
-      // Auto-suggest title and code if currently blank or default
       if (!title || title.startsWith('EX-') || title === '') {
         setTitle(`${selectedCourse.code}: ${selectedCourse.title} Examination`);
       }
@@ -111,6 +114,36 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
       }
     }
   };
+
+  const handleCourseChange = (selectedId: string) => {
+    handleCourseChangeWithList(selectedId, courses);
+  };
+
+  const handleQuickCreateCourse = async () => {
+    setIsCreatingQuickCourse(true);
+    setValidationError(null);
+    try {
+      const created = await apiClient.createCourse({
+        name: 'Introduction to Computing',
+        title: 'Introduction to Computing',
+        code: 'COM111',
+        level: 'ND1',
+        description: 'Foundational computer science principles, hardware, and algorithms.',
+      });
+      const updatedCourses = [...courses, created];
+      setCourses(updatedCourses);
+      handleCourseChangeWithList(created.id, updatedCourses);
+      success('Course Created', 'COM111 (Introduction to Computing) created and selected.');
+    } catch (e: any) {
+      const msg = e?.message || 'Failed to auto-create COM111 course';
+      setValidationError(msg);
+      error('Course Creation Failed', msg);
+    } finally {
+      setIsCreatingQuickCourse(false);
+    }
+  };
+
+  if (!isOpen) return null;
 
   const handleAddInstruction = () => {
     if (newInstruction.trim()) {
@@ -171,16 +204,20 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
       } else {
         if (initialExam) {
           await apiClient.updateExam(initialExam.id, payload);
+          success('Examination Updated', `"${payload.title}" (${payload.code}) was updated successfully.`);
         } else {
-          await apiClient.createExam(payload as any);
+          const created = await apiClient.createExam(payload as any);
+          success('Examination Created', `"${created.title}" (${created.code}) created successfully.`);
         }
         if (onExamCreated) {
           onExamCreated();
         }
       }
       onClose();
-    } catch (err: unknown) {
-      setValidationError(err instanceof Error ? err.message : 'Failed to save examination.');
+    } catch (err: any) {
+      const msg = err?.message || (typeof err === 'string' ? err : 'Failed to save examination.');
+      setValidationError(msg);
+      error('Creation Failed', msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -246,9 +283,27 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
               </select>
             </div>
             {courses.length === 0 && !isLoadingCourses && (
-              <p className="text-[11px] text-amber-700 mt-1">
-                No courses found. You can create courses in the Courses management page first.
-              </p>
+              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-900">
+                <span>No courses found on server yet.</span>
+                <button
+                  type="button"
+                  disabled={isCreatingQuickCourse}
+                  onClick={handleQuickCreateCourse}
+                  className="px-3 py-1.5 bg-amber-800 hover:bg-amber-900 text-white rounded-lg font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50"
+                >
+                  {isCreatingQuickCourse ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Creating COM111...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Quick Create COM111 (ND1) Course</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
 
@@ -432,9 +487,10 @@ export const CreateExamModal: React.FC<CreateExamModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-800 hover:bg-emerald-900 transition shadow-xs disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-800 hover:bg-emerald-900 transition shadow-xs disabled:opacity-50 flex items-center gap-2"
             >
-              {isSubmitting ? 'Saving...' : initialExam ? 'Save Changes' : 'Create Examination'}
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{isSubmitting ? 'Saving Examination...' : initialExam ? 'Save Changes' : 'Create Examination'}</span>
             </button>
           </div>
         </form>

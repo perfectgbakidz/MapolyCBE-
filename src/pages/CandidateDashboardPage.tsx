@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   CheckCircle,
   GraduationCap,
+  KeyRound,
 } from 'lucide-react';
 
 export const CandidateDashboardPage: React.FC = () => {
@@ -25,6 +26,7 @@ export const CandidateDashboardPage: React.FC = () => {
 
   const [exams, setExams] = useState<Exam[]>([]);
   const [completedExamIds, setCompletedExamIds] = useState<Set<string>>(new Set());
+  const [resultsMap, setResultsMap] = useState<Record<string, ExamResult>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -40,12 +42,15 @@ export const CandidateDashboardPage: React.FC = () => {
         // Active published exams
         setExams(examsData.filter((e) => e.status === 'published'));
 
-        // Cross-reference completed exams
+        // Cross-reference completed exams and scores
         const completedIds = new Set<string>();
+        const map: Record<string, ExamResult> = {};
         resultsData.forEach((res: ExamResult) => {
           completedIds.add(res.examId);
+          map[res.examId] = res;
         });
         setCompletedExamIds(completedIds);
+        setResultsMap(map);
       } catch (e) {
         console.error('Failed to load dashboard data:', e);
       } finally {
@@ -125,6 +130,15 @@ export const CandidateDashboardPage: React.FC = () => {
               >
                 <Award className="w-4 h-4 text-emerald-800" />
                 <span>My Results</span>
+              </button>
+              <button
+                type="button"
+                id="dashboard_profile_btn"
+                onClick={() => navigate('/profile')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold border border-stone-300 transition"
+              >
+                <KeyRound className="w-4 h-4 text-emerald-800" />
+                <span>Profile &amp; Password</span>
               </button>
               <button
                 type="button"
@@ -252,15 +266,26 @@ export const CandidateDashboardPage: React.FC = () => {
 
                   {/* Card Action */}
                   {isCompleted ? (
-                    <button
-                      type="button"
-                      id={`btn_view_result_${exam.id}`}
-                      onClick={() => navigate('/results')}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-emerald-900 border border-stone-300 text-xs font-bold transition shadow-xs"
-                    >
-                      <Award className="w-4 h-4 text-emerald-800" />
-                      <span>Completed — View Results</span>
-                    </button>
+                    <div className="space-y-2">
+                      {resultsMap[exam.id] && (
+                        <div className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+                          <span className="font-semibold text-emerald-800">Your Score:</span>
+                          <span className="font-mono font-bold text-emerald-950">
+                            {resultsMap[exam.id].score} / {resultsMap[exam.id].totalScore}{' '}
+                            <span className="text-[11px] font-semibold text-emerald-700">({resultsMap[exam.id].percentage}%)</span>
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        id={`btn_view_result_${exam.id}`}
+                        onClick={() => navigate('/results')}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-emerald-900 border border-stone-300 text-xs font-bold transition shadow-xs"
+                      >
+                        <Award className="w-4 h-4 text-emerald-800" />
+                        <span>Completed — View Results</span>
+                      </button>
+                    </div>
                   ) : (
                     <button
                       type="button"

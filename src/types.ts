@@ -248,6 +248,34 @@ export interface ExamResult {
   breakdown: QuestionResultBreakdown[];
 }
 
+export interface PasswordResetRequest {
+  id: string;
+  matricNo: string;
+  email: string;
+  fullName?: string;
+  reason?: string;
+  status: 'pending' | 'resolved' | 'rejected';
+  requestedAt: string;
+  resolvedAt?: string;
+  resolvedByAdminId?: string;
+  adminNotes?: string;
+  temporaryPasswordAssigned?: string;
+}
+
+export interface StudentPasswordRecord {
+  matricNo: string;
+  email?: string;
+  candidateId?: string;
+  fullName?: string;
+  level?: AcademicLevel;
+  currentPassword: string;
+  initialBackendPassword?: string;
+  updatedAt: string;
+  updatedBy: 'admin' | 'student' | 'registration';
+  adminId?: string;
+  adminNotes?: string;
+}
+
 export type SecuritySeverity = 'low' | 'medium' | 'high' | 'critical';
 
 export type SecurityEventType =

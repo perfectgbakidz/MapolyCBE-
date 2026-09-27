@@ -1,1 +1,3811 @@
-{"openapi":"3.1.0","info":{"title":"Secure Computer-Based Examination System","description":"Prototype secure real-time computer-based examination backend.","version":"1.0.0"},"paths":{"/auth/candidate/register":{"post":{"tags":["auth"],"summary":"Register Candidate","operationId":"register_candidate_auth_candidate_register_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CandidateRegister"}}},"required":true},"responses":{"201":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TokenResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/auth/candidate/login":{"post":{"tags":["auth"],"summary":"Login Candidate","operationId":"login_candidate_auth_candidate_login_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/LoginRequest"}}},"required":true},"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TokenResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/auth/admin/register":{"post":{"tags":["auth"],"summary":"Register Admin","operationId":"register_admin_auth_admin_register_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/AdminRegister"}}},"required":true},"responses":{"201":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TokenResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/auth/admin/login":{"post":{"tags":["auth"],"summary":"Login Admin","operationId":"login_admin_auth_admin_login_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/LoginRequest"}}},"required":true},"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TokenResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/exams":{"get":{"tags":["exams"],"summary":"List Exams","operationId":"list_exams_exams_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"items":{"$ref":"#/components/schemas/ExaminationPublic"},"type":"array","title":"Response List Exams Exams Get"}}}}}},"post":{"tags":["exams"],"summary":"Create Exam","operationId":"create_exam_exams_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ExaminationCreate"}}},"required":true},"responses":{"201":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ExaminationPublic"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}},"security":[{"OAuth2PasswordBearer":[]}]}},"/exams/{exam_id}/questions":{"post":{"tags":["exams"],"summary":"Add Question","operationId":"add_question_exams__exam_id__questions_post","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"exam_id","in":"path","required":true,"schema":{"type":"string","title":"Exam Id"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/QuestionCreate"}}}},"responses":{"201":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/QuestionAdminView"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}},"get":{"tags":["exams"],"summary":"List Questions Candidate","description":"Candidate-facing question list — correct_option is never included.","operationId":"list_questions_candidate_exams__exam_id__questions_get","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"exam_id","in":"path","required":true,"schema":{"type":"string","title":"Exam Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/QuestionPublic"},"title":"Response List Questions Candidate Exams  Exam Id  Questions Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/exams/{exam_id}/questions/admin":{"get":{"tags":["exams"],"summary":"List Questions Admin","operationId":"list_questions_admin_exams__exam_id__questions_admin_get","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"exam_id","in":"path","required":true,"schema":{"type":"string","title":"Exam Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/QuestionAdminView"},"title":"Response List Questions Admin Exams  Exam Id  Questions Admin Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/exams/{exam_id}":{"get":{"tags":["exams"],"summary":"Get Exam","operationId":"get_exam_exams__exam_id__get","parameters":[{"name":"exam_id","in":"path","required":true,"schema":{"type":"string","title":"Exam Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ExaminationPublic"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/exams/{exam_id}/responses":{"post":{"tags":["responses"],"summary":"Submit Response","description":"Real-time response capture: persists (or updates) a candidate's\nanswer to a single question immediately, with a checksum over its\ncontents so later tampering can be detected (Section 3.5.3).","operationId":"submit_response_exams__exam_id__responses_post","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"exam_id","in":"path","required":true,"schema":{"type":"string","title":"Exam Id"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ResponseSubmit"}}}},"responses":{"201":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ResponsePublic"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/exams/{exam_id}/responses/me":{"get":{"tags":["responses"],"summary":"My Responses","operationId":"my_responses_exams__exam_id__responses_me_get","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"exam_id","in":"path","required":true,"schema":{"type":"string","title":"Exam Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/ResponsePublic"},"title":"Response My Responses Exams  Exam Id  Responses Me Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/exams/{exam_id}/submit":{"post":{"tags":["responses"],"summary":"Submit Exam","description":"Scores the candidate's stored responses and writes a Result row.","operationId":"submit_exam_exams__exam_id__submit_post","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"exam_id","in":"path","required":true,"schema":{"type":"string","title":"Exam Id"}}],"responses":{"201":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/ResultPublic"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/results/me":{"get":{"tags":["responses"],"summary":"My Results","operationId":"my_results_results_me_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"items":{"$ref":"#/components/schemas/ResultPublic"},"type":"array","title":"Response My Results Results Me Get"}}}}},"security":[{"OAuth2PasswordBearer":[]}]}},"/security/logs":{"get":{"tags":["security"],"summary":"List Security Logs","operationId":"list_security_logs_security_logs_get","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"limit","in":"query","required":false,"schema":{"type":"integer","default":100,"title":"Limit"}},{"name":"event_type","in":"query","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Event Type"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/SecurityLogPublic"},"title":"Response List Security Logs Security Logs Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/security/verify/response/{response_id}":{"get":{"tags":["security"],"summary":"Verify Response Integrity","operationId":"verify_response_integrity_security_verify_response__response_id__get","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"response_id","in":"path","required":true,"schema":{"type":"string","title":"Response Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/IntegrityCheckResult"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/security/verify/result/{result_id}":{"get":{"tags":["security"],"summary":"Verify Result Integrity","operationId":"verify_result_integrity_security_verify_result__result_id__get","security":[{"OAuth2PasswordBearer":[]}],"parameters":[{"name":"result_id","in":"path","required":true,"schema":{"type":"string","title":"Result Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/IntegrityCheckResult"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/":{"get":{"tags":["health"],"summary":"Root","operationId":"root__get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{}}}}}}},"/health":{"get":{"tags":["health"],"summary":"Health","operationId":"health_health_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{}}}}}}}},"components":{"schemas":{"AdminRegister":{"properties":{"username":{"type":"string","maxLength":50,"minLength":3,"title":"Username"},"email":{"type":"string","format":"email","title":"Email"},"password":{"type":"string","maxLength":128,"minLength":8,"title":"Password"}},"type":"object","required":["username","email","password"],"title":"AdminRegister"},"CandidateRegister":{"properties":{"matric_no":{"type":"string","maxLength":50,"minLength":3,"title":"Matric No"},"email":{"type":"string","format":"email","title":"Email"},"full_name":{"type":"string","maxLength":100,"minLength":2,"title":"Full Name"},"password":{"type":"string","maxLength":128,"minLength":8,"title":"Password"}},"type":"object","required":["matric_no","email","full_name","password"],"title":"CandidateRegister"},"ExaminationCreate":{"properties":{"title":{"type":"string","maxLength":200,"minLength":3,"title":"Title"},"description":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Description"},"duration_minutes":{"type":"integer","maximum":600.0,"exclusiveMinimum":0.0,"title":"Duration Minutes"}},"type":"object","required":["title","duration_minutes"],"title":"ExaminationCreate"},"ExaminationPublic":{"properties":{"id":{"type":"string","title":"Id"},"title":{"type":"string","title":"Title"},"description":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Description"},"duration_minutes":{"type":"integer","title":"Duration Minutes"},"is_active":{"type":"boolean","title":"Is Active"},"created_at":{"type":"string","format":"date-time","title":"Created At"}},"type":"object","required":["id","title","description","duration_minutes","is_active","created_at"],"title":"ExaminationPublic"},"HTTPValidationError":{"properties":{"detail":{"items":{"$ref":"#/components/schemas/ValidationError"},"type":"array","title":"Detail"}},"type":"object","title":"HTTPValidationError"},"IntegrityCheckResult":{"properties":{"record_id":{"type":"string","title":"Record Id"},"table":{"type":"string","title":"Table"},"stored_checksum":{"type":"string","title":"Stored Checksum"},"recomputed_checksum":{"type":"string","title":"Recomputed Checksum"},"intact":{"type":"boolean","title":"Intact"}},"type":"object","required":["record_id","table","stored_checksum","recomputed_checksum","intact"],"title":"IntegrityCheckResult"},"LoginRequest":{"properties":{"identifier":{"type":"string","title":"Identifier"},"password":{"type":"string","title":"Password"}},"type":"object","required":["identifier","password"],"title":"LoginRequest"},"QuestionAdminView":{"properties":{"id":{"type":"string","title":"Id"},"text":{"type":"string","title":"Text"},"option_a":{"type":"string","title":"Option A"},"option_b":{"type":"string","title":"Option B"},"option_c":{"type":"string","title":"Option C"},"option_d":{"type":"string","title":"Option D"},"correct_option":{"type":"string","title":"Correct Option"}},"type":"object","required":["id","text","option_a","option_b","option_c","option_d","correct_option"],"title":"QuestionAdminView"},"QuestionCreate":{"properties":{"text":{"type":"string","title":"Text"},"option_a":{"type":"string","title":"Option A"},"option_b":{"type":"string","title":"Option B"},"option_c":{"type":"string","title":"Option C"},"option_d":{"type":"string","title":"Option D"},"correct_option":{"type":"string","pattern":"^[A-D]$","title":"Correct Option"}},"type":"object","required":["text","option_a","option_b","option_c","option_d","correct_option"],"title":"QuestionCreate"},"QuestionPublic":{"properties":{"id":{"type":"string","title":"Id"},"text":{"type":"string","title":"Text"},"option_a":{"type":"string","title":"Option A"},"option_b":{"type":"string","title":"Option B"},"option_c":{"type":"string","title":"Option C"},"option_d":{"type":"string","title":"Option D"}},"type":"object","required":["id","text","option_a","option_b","option_c","option_d"],"title":"QuestionPublic"},"ResponsePublic":{"properties":{"id":{"type":"string","title":"Id"},"question_id":{"type":"string","title":"Question Id"},"selected_option":{"type":"string","title":"Selected Option"},"submitted_at":{"type":"string","format":"date-time","title":"Submitted At"},"checksum":{"type":"string","title":"Checksum"}},"type":"object","required":["id","question_id","selected_option","submitted_at","checksum"],"title":"ResponsePublic"},"ResponseSubmit":{"properties":{"question_id":{"type":"string","title":"Question Id"},"selected_option":{"type":"string","pattern":"^[A-D]$","title":"Selected Option"},"session_id":{"type":"string","title":"Session Id"}},"type":"object","required":["question_id","selected_option","session_id"],"title":"ResponseSubmit"},"ResultPublic":{"properties":{"id":{"type":"string","title":"Id"},"exam_id":{"type":"string","title":"Exam Id"},"score":{"type":"number","title":"Score"},"total_questions":{"type":"integer","title":"Total Questions"},"submitted_at":{"type":"string","format":"date-time","title":"Submitted At"},"checksum":{"type":"string","title":"Checksum"}},"type":"object","required":["id","exam_id","score","total_questions","submitted_at","checksum"],"title":"ResultPublic"},"SecurityLogPublic":{"properties":{"id":{"type":"string","title":"Id"},"event_type":{"type":"string","title":"Event Type"},"actor":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Actor"},"ip_address":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Ip Address"},"endpoint":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Endpoint"},"details":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Details"},"created_at":{"type":"string","format":"date-time","title":"Created At"}},"type":"object","required":["id","event_type","actor","ip_address","endpoint","details","created_at"],"title":"SecurityLogPublic"},"TokenResponse":{"properties":{"access_token":{"type":"string","title":"Access Token"},"token_type":{"type":"string","title":"Token Type","default":"bearer"},"role":{"type":"string","title":"Role"}},"type":"object","required":["access_token","role"],"title":"TokenResponse"},"ValidationError":{"properties":{"loc":{"items":{"anyOf":[{"type":"string"},{"type":"integer"}]},"type":"array","title":"Location"},"msg":{"type":"string","title":"Message"},"type":{"type":"string","title":"Error Type"}},"type":"object","required":["loc","msg","type"],"title":"ValidationError"}},"securitySchemes":{"OAuth2PasswordBearer":{"type":"oauth2","flows":{"password":{"scopes":{},"tokenUrl":"/auth/candidate/login"}}}}}}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Secure Computer-Based Examination System",
+    "description": "Prototype secure real-time computer-based examination backend.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/auth/candidate/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register Candidate",
+        "operationId": "register_candidate_auth_candidate_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/candidate/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login Candidate",
+        "operationId": "login_candidate_auth_candidate_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/candidate/change-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Change Candidate Password",
+        "description": "Lets an authenticated candidate change their own password from their profile.",
+        "operationId": "change_candidate_password_auth_candidate_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/candidate/me": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get Candidate Me",
+        "description": "Returns the authenticated candidate's profile, academic level, and\nenrolled courses — so the client never has to decode JWT claims\nitself to render a profile page.",
+        "operationId": "get_candidate_me_auth_candidate_me_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateMe"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/admin/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register Admin",
+        "operationId": "register_admin_auth_admin_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/admin/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login Admin",
+        "operationId": "login_admin_auth_admin_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/parent/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register Parent",
+        "description": "Registers a parent/guardian account and automatically links it to\nevery existing candidate whose full_name exactly matches (case-\ninsensitively) one of the submitted children_names. At least one\nsubmitted name must match an existing candidate, otherwise the\nregistration is rejected with 400 and nothing is created.",
+        "operationId": "register_parent_auth_parent_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentRegisterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/parent/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login Parent",
+        "operationId": "login_parent_auth_parent_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses": {
+      "post": {
+        "tags": [
+          "courses"
+        ],
+        "summary": "Create Course",
+        "operationId": "create_course_courses_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseWithEnrollmentCount"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "courses"
+        ],
+        "summary": "List Courses",
+        "operationId": "list_courses_courses_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CoursePublic"
+                  },
+                  "title": "Response List Courses Courses Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{course_id}": {
+      "patch": {
+        "tags": [
+          "courses"
+        ],
+        "summary": "Update Course",
+        "description": "Edits a course's name/code. Level is intentionally not editable here — create a new course instead.",
+        "operationId": "update_course_courses__course_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Course Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoursePublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "courses"
+        ],
+        "summary": "Delete Course",
+        "operationId": "delete_course_courses__course_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Course Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/mine": {
+      "get": {
+        "tags": [
+          "courses"
+        ],
+        "summary": "List My Courses",
+        "description": "Courses the current candidate has been auto-distributed onto, based on their level.",
+        "operationId": "list_my_courses_courses_mine_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CoursePublic"
+                  },
+                  "type": "array",
+                  "title": "Response List My Courses Courses Mine Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/exams": {
+      "post": {
+        "tags": [
+          "exams"
+        ],
+        "summary": "Create Exam",
+        "operationId": "create_exam_exams_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExaminationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExaminationPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "exams"
+        ],
+        "summary": "List Exams",
+        "description": "Admins see every active exam (optionally filtered by level/course_id).\nCandidates only ever see active exams belonging to a course they are\nenrolled in — i.e. exams that match their level.",
+        "operationId": "list_exams_exams_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          },
+          {
+            "name": "course_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Course Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExaminationPublic"
+                  },
+                  "title": "Response List Exams Exams Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exams/{exam_id}/questions": {
+      "post": {
+        "tags": [
+          "exams"
+        ],
+        "summary": "Add Question",
+        "operationId": "add_question_exams__exam_id__questions_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exam_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exam Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionAdminView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "exams"
+        ],
+        "summary": "List Questions Candidate",
+        "description": "Candidate-facing question list — correct_option is never included.",
+        "operationId": "list_questions_candidate_exams__exam_id__questions_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exam_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exam Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionPublic"
+                  },
+                  "title": "Response List Questions Candidate Exams  Exam Id  Questions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exams/{exam_id}/questions/admin": {
+      "get": {
+        "tags": [
+          "exams"
+        ],
+        "summary": "List Questions Admin",
+        "operationId": "list_questions_admin_exams__exam_id__questions_admin_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exam_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exam Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionAdminView"
+                  },
+                  "title": "Response List Questions Admin Exams  Exam Id  Questions Admin Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exams/{exam_id}": {
+      "get": {
+        "tags": [
+          "exams"
+        ],
+        "summary": "Get Exam",
+        "operationId": "get_exam_exams__exam_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exam_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exam Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExaminationPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exams/{exam_id}/responses": {
+      "post": {
+        "tags": [
+          "responses"
+        ],
+        "summary": "Submit Response",
+        "description": "Real-time response capture: persists (or updates) a candidate's\nanswer to a single question immediately, with a checksum over its\ncontents so later tampering can be detected (Section 3.5.3).",
+        "operationId": "submit_response_exams__exam_id__responses_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exam_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exam Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseSubmit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsePublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exams/{exam_id}/responses/me": {
+      "get": {
+        "tags": [
+          "responses"
+        ],
+        "summary": "My Responses",
+        "operationId": "my_responses_exams__exam_id__responses_me_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exam_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exam Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponsePublic"
+                  },
+                  "title": "Response My Responses Exams  Exam Id  Responses Me Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exams/{exam_id}/submit": {
+      "post": {
+        "tags": [
+          "responses"
+        ],
+        "summary": "Submit Exam",
+        "description": "Scores the candidate's stored responses and writes a Result row.\n\nThe raw score is the sum of `points` for every correctly answered\nquestion (== the count of correct answers when every question\nuses the default 1.0-point weight), out of `max_score` — the sum\nof `points` across every question in the exam. `total_questions`\nstays a plain question count for display (e.g. \"18/20 questions\nanswered correctly\").",
+        "operationId": "submit_exam_exams__exam_id__submit_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exam_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exam Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultPublic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/results/me": {
+      "get": {
+        "tags": [
+          "responses"
+        ],
+        "summary": "My Results",
+        "operationId": "my_results_results_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResultPublic"
+                  },
+                  "type": "array",
+                  "title": "Response My Results Results Me Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/results/{result_id}/breakdown": {
+      "get": {
+        "tags": [
+          "responses"
+        ],
+        "summary": "Result Breakdown",
+        "description": "Full question-by-question breakdown for one result: question text,\nthe candidate's chosen option, the correct option, marks earned,\nand any explanation. A candidate may only view their own result;\nan admin may view any.",
+        "operationId": "result_breakdown_results__result_id__breakdown_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "result_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Result Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultBreakdown"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/logs": {
+      "get": {
+        "tags": [
+          "security"
+        ],
+        "summary": "List Security Logs",
+        "operationId": "list_security_logs_security_logs_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SecurityLogPublic"
+                  },
+                  "title": "Response List Security Logs Security Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/verify/response/{response_id}": {
+      "get": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Verify Response Integrity",
+        "operationId": "verify_response_integrity_security_verify_response__response_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "response_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Response Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrityCheckResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/verify/result/{result_id}": {
+      "get": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Verify Result Integrity",
+        "operationId": "verify_result_integrity_security_verify_result__result_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "result_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Result Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrityCheckResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students": {
+      "get": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "List Students",
+        "description": "List all candidates. Optional filters:\n- level: exact level match (e.g. HND1_SWD)\n- search: case-insensitive partial match on matric_no or full_name",
+        "operationId": "list_students_admin_students_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CandidateAdminView"
+                  },
+                  "title": "Response List Students Admin Students Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students/bulk-import": {
+      "post": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Bulk Import Students",
+        "description": "Bulk-registers a matriculation cohort from a CSV file. Required\ncolumns: matric_no, email, full_name, level. Optional: password\n(a random temporary password is generated per row if omitted —\nit is returned in `errors` as a notice, never logged in plaintext\nelsewhere). Newly created candidates are auto-enrolled in every\nexisting course at their level, same as self-registration.",
+        "operationId": "bulk_import_students_admin_students_bulk_import_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_bulk_import_students_admin_students_bulk_import_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkStudentImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/admin/students/{candidate_id}": {
+      "get": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Get Student Profile",
+        "operationId": "get_student_profile_admin_students__candidate_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateAdminDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Update Student",
+        "description": "Edits a candidate's profile. Changing `level` does NOT remove the\ncandidate from courses they were already enrolled in under their\nold level (enrollment history is preserved) — it only adds new\nauto-enrollments for any existing course at the new level.",
+        "operationId": "update_student_admin_students__candidate_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateAdminView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students/{candidate_id}/deactivate": {
+      "post": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Deactivate Student",
+        "description": "Blocks the candidate from logging in without deleting any of their data.",
+        "operationId": "deactivate_student_admin_students__candidate_id__deactivate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateAdminView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students/{candidate_id}/activate": {
+      "post": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Activate Student",
+        "operationId": "activate_student_admin_students__candidate_id__activate_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateAdminView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students/{candidate_id}/unlock": {
+      "post": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Unlock Student",
+        "description": "Clears a lockout caused by repeated failed login attempts.",
+        "operationId": "unlock_student_admin_students__candidate_id__unlock_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateAdminView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students/{candidate_id}/reset-password": {
+      "post": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Reset Student Password",
+        "description": "Assigns a new password (or generates a temporary one) for a\ncandidate who is locked out or has forgotten their credentials in\nthe exam hall. Also clears any existing lockout so they can log\nin immediately.",
+        "operationId": "reset_student_password_admin_students__candidate_id__reset_password_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPasswordReset"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPasswordResetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students/{candidate_id}/enroll": {
+      "post": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Enroll Student",
+        "description": "Assigns one or more courses to a student directly, regardless of their level-based auto-distribution.",
+        "operationId": "enroll_student_admin_students__candidate_id__enroll_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrollRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnrollResult"
+                  },
+                  "title": "Response Enroll Student Admin Students  Candidate Id  Enroll Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students/{candidate_id}/enroll/{course_id}": {
+      "delete": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Unenroll Student",
+        "operationId": "unenroll_student_admin_students__candidate_id__enroll__course_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          },
+          {
+            "name": "course_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Course Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/students/{candidate_id}/results": {
+      "get": {
+        "tags": [
+          "admin-students"
+        ],
+        "summary": "Get Student Results",
+        "operationId": "get_student_results_admin_students__candidate_id__results_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResultWithExam"
+                  },
+                  "title": "Response Get Student Results Admin Students  Candidate Id  Results Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parent/me": {
+      "get": {
+        "tags": [
+          "parent"
+        ],
+        "summary": "Get Parent Me",
+        "description": "Returns the authenticated parent's profile and contact details, plus their linked children.",
+        "operationId": "get_parent_me_parent_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentMe"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/parent/children/link": {
+      "post": {
+        "tags": [
+          "parent"
+        ],
+        "summary": "Link Child",
+        "description": "Lets an already-registered parent add or link another ward using\nthe ward's matriculation number, rather than only matching by\nname at registration time.",
+        "operationId": "link_child_parent_children_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentLinkChildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/parent/children": {
+      "get": {
+        "tags": [
+          "parent"
+        ],
+        "summary": "List Children",
+        "description": "All candidates linked to this parent account.",
+        "operationId": "list_children_parent_children_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChildSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Children Parent Children Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/parent/children/{candidate_id}/exams": {
+      "get": {
+        "tags": [
+          "parent"
+        ],
+        "summary": "Child Exam Status",
+        "description": "Every exam available to this child (i.e. belonging to a course\nthey're enrolled in), each flagged done/undone, with the result\nattached when done.",
+        "operationId": "child_exam_status_parent_children__candidate_id__exams_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildExamStatus"
+                  },
+                  "title": "Response Child Exam Status Parent Children  Candidate Id  Exams Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parent/children/{candidate_id}/results": {
+      "get": {
+        "tags": [
+          "parent"
+        ],
+        "summary": "Child Results",
+        "description": "Every completed result for this child, most recent first.",
+        "operationId": "child_results_parent_children__candidate_id__results_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResultWithExam"
+                  },
+                  "title": "Response Child Results Parent Children  Candidate Id  Results Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminPasswordReset": {
+        "properties": {
+          "new_password": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "title": "AdminPasswordReset",
+        "description": "Both fields optional. If new_password is omitted, a random\ntemporary password is generated and returned once in the response\n(it is never stored or logged in plaintext) — useful when an\nadmin is resetting credentials for a candidate locked out in the\nexam hall and just needs *something* to hand them immediately."
+      },
+      "AdminPasswordResetResponse": {
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "title": "Candidate Id"
+          },
+          "temporary_password": {
+            "type": "string",
+            "title": "Temporary Password"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": "Share this password with the candidate securely. It will not be shown again."
+          }
+        },
+        "type": "object",
+        "required": [
+          "candidate_id",
+          "temporary_password"
+        ],
+        "title": "AdminPasswordResetResponse"
+      },
+      "AdminRegister": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 3,
+            "title": "Username"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "email",
+          "password"
+        ],
+        "title": "AdminRegister"
+      },
+      "Body_bulk_import_students_admin_students_bulk_import_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_bulk_import_students_admin_students_bulk_import_post"
+      },
+      "BulkStudentImportResult": {
+        "properties": {
+          "created": {
+            "type": "integer",
+            "title": "Created"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors",
+            "default": []
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateAdminView"
+            },
+            "type": "array",
+            "title": "Students",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "created",
+          "failed"
+        ],
+        "title": "BulkStudentImportResult"
+      },
+      "CandidateAdminDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "matric_no": {
+            "type": "string",
+            "title": "Matric No"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "is_locked": {
+            "type": "boolean",
+            "title": "Is Locked"
+          },
+          "failed_login_attempts": {
+            "type": "integer",
+            "title": "Failed Login Attempts"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "enrolled_courses": {
+            "items": {
+              "$ref": "#/components/schemas/CoursePublic"
+            },
+            "type": "array",
+            "title": "Enrolled Courses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "matric_no",
+          "email",
+          "full_name",
+          "level",
+          "is_active",
+          "is_locked",
+          "failed_login_attempts",
+          "created_at",
+          "enrolled_courses"
+        ],
+        "title": "CandidateAdminDetail"
+      },
+      "CandidateAdminView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "matric_no": {
+            "type": "string",
+            "title": "Matric No"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "is_locked": {
+            "type": "boolean",
+            "title": "Is Locked"
+          },
+          "failed_login_attempts": {
+            "type": "integer",
+            "title": "Failed Login Attempts"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "matric_no",
+          "email",
+          "full_name",
+          "level",
+          "is_active",
+          "is_locked",
+          "failed_login_attempts",
+          "created_at"
+        ],
+        "title": "CandidateAdminView"
+      },
+      "CandidateMe": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "matric_no": {
+            "type": "string",
+            "title": "Matric No"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "enrolled_courses": {
+            "items": {
+              "$ref": "#/components/schemas/CoursePublic"
+            },
+            "type": "array",
+            "title": "Enrolled Courses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "matric_no",
+          "email",
+          "full_name",
+          "level",
+          "is_active",
+          "created_at",
+          "enrolled_courses"
+        ],
+        "title": "CandidateMe"
+      },
+      "CandidateRegister": {
+        "properties": {
+          "matric_no": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 3,
+            "title": "Matric No"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Full Name"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "matric_no",
+          "email",
+          "full_name",
+          "password",
+          "level"
+        ],
+        "title": "CandidateRegister"
+      },
+      "CandidateUpdate": {
+        "properties": {
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Level"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "CandidateUpdate",
+        "description": "All fields optional — send only what you want to change."
+      },
+      "ChangePasswordRequest": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordRequest"
+      },
+      "ChildExamStatus": {
+        "properties": {
+          "exam_id": {
+            "type": "string",
+            "title": "Exam Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "course_id": {
+            "type": "string",
+            "title": "Course Id"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "done": {
+            "type": "boolean",
+            "title": "Done"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResultPublic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "exam_id",
+          "title",
+          "course_id",
+          "level",
+          "duration_minutes",
+          "is_active",
+          "done"
+        ],
+        "title": "ChildExamStatus"
+      },
+      "ChildMatch": {
+        "properties": {
+          "name_submitted": {
+            "type": "string",
+            "title": "Name Submitted"
+          },
+          "matched": {
+            "type": "boolean",
+            "title": "Matched"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "matric_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matric No"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name_submitted",
+          "matched"
+        ],
+        "title": "ChildMatch"
+      },
+      "ChildSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "matric_no": {
+            "type": "string",
+            "title": "Matric No"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "matric_no",
+          "full_name",
+          "level"
+        ],
+        "title": "ChildSummary"
+      },
+      "CourseCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 2,
+            "title": "Code"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "code",
+          "level"
+        ],
+        "title": "CourseCreate"
+      },
+      "CoursePublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "code",
+          "level",
+          "created_at"
+        ],
+        "title": "CoursePublic"
+      },
+      "CourseUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "title": "CourseUpdate",
+        "description": "All fields optional — send only what you want to change."
+      },
+      "CourseWithEnrollmentCount": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "enrolled_candidates": {
+            "type": "integer",
+            "title": "Enrolled Candidates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "code",
+          "level",
+          "created_at",
+          "enrolled_candidates"
+        ],
+        "title": "CourseWithEnrollmentCount"
+      },
+      "EnrollRequest": {
+        "properties": {
+          "course_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Course Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "course_ids"
+        ],
+        "title": "EnrollRequest"
+      },
+      "EnrollResult": {
+        "properties": {
+          "course_id": {
+            "type": "string",
+            "title": "Course Id"
+          },
+          "enrolled": {
+            "type": "boolean",
+            "title": "Enrolled"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "course_id",
+          "enrolled"
+        ],
+        "title": "EnrollResult"
+      },
+      "ExamStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "published",
+          "closed"
+        ],
+        "title": "ExamStatus"
+      },
+      "ExaminationCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "maximum": 600,
+            "exclusiveMinimum": 0,
+            "title": "Duration Minutes"
+          },
+          "course_id": {
+            "type": "string",
+            "title": "Course Id"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "pass_mark_percentage": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Pass Mark Percentage",
+            "default": 50
+          },
+          "shuffle_questions": {
+            "type": "boolean",
+            "title": "Shuffle Questions",
+            "default": true
+          },
+          "shuffle_options": {
+            "type": "boolean",
+            "title": "Shuffle Options",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "duration_minutes",
+          "course_id"
+        ],
+        "title": "ExaminationCreate"
+      },
+      "ExaminationPublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExamStatus"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          },
+          "pass_mark_percentage": {
+            "type": "integer",
+            "title": "Pass Mark Percentage"
+          },
+          "shuffle_questions": {
+            "type": "boolean",
+            "title": "Shuffle Questions"
+          },
+          "shuffle_options": {
+            "type": "boolean",
+            "title": "Shuffle Options"
+          },
+          "course_id": {
+            "type": "string",
+            "title": "Course Id"
+          },
+          "level": {
+            "$ref": "#/components/schemas/Level"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "duration_minutes",
+          "is_active",
+          "status",
+          "start_time",
+          "end_time",
+          "pass_mark_percentage",
+          "shuffle_questions",
+          "shuffle_options",
+          "course_id",
+          "level",
+          "created_at"
+        ],
+        "title": "ExaminationPublic"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IntegrityCheckResult": {
+        "properties": {
+          "record_id": {
+            "type": "string",
+            "title": "Record Id"
+          },
+          "table": {
+            "type": "string",
+            "title": "Table"
+          },
+          "stored_checksum": {
+            "type": "string",
+            "title": "Stored Checksum"
+          },
+          "recomputed_checksum": {
+            "type": "string",
+            "title": "Recomputed Checksum"
+          },
+          "intact": {
+            "type": "boolean",
+            "title": "Intact"
+          }
+        },
+        "type": "object",
+        "required": [
+          "record_id",
+          "table",
+          "stored_checksum",
+          "recomputed_checksum",
+          "intact"
+        ],
+        "title": "IntegrityCheckResult"
+      },
+      "Level": {
+        "type": "string",
+        "enum": [
+          "ND1",
+          "ND2",
+          "HND1_SWD",
+          "HND1_NCC",
+          "HND2_SWD",
+          "HND2_NCC"
+        ],
+        "title": "Level",
+        "description": "Academic level a candidate is studying at, and a course/exam is\ntargeted at.\n\nND (National Diploma) has two years, no departmental split.\nHND (Higher National Diploma) also has two years, but candidates\nadditionally belong to one of two options within Computer Science:\nSWD (Software Engineering) or NCC (Network and Computer\nConnectivity/Communication). Adjust the exact option codes below\nif Mapoly uses different abbreviations."
+      },
+      "LoginRequest": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "title": "Identifier"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identifier",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "ParentLinkChildRequest": {
+        "properties": {
+          "matric_no": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 3,
+            "title": "Matric No"
+          }
+        },
+        "type": "object",
+        "required": [
+          "matric_no"
+        ],
+        "title": "ParentLinkChildRequest"
+      },
+      "ParentMe": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address"
+          },
+          "phone_number": {
+            "type": "string",
+            "title": "Phone Number"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/ChildSummary"
+            },
+            "type": "array",
+            "title": "Children"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "full_name",
+          "address",
+          "phone_number",
+          "is_active",
+          "created_at",
+          "children"
+        ],
+        "title": "ParentMe"
+      },
+      "ParentRegister": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Full Name"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 3,
+            "title": "Address"
+          },
+          "phone_number": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 7,
+            "title": "Phone Number"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          },
+          "children_names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Children Names"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "address",
+          "phone_number",
+          "password",
+          "children_names"
+        ],
+        "title": "ParentRegister"
+      },
+      "ParentRegisterResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/ChildMatch"
+            },
+            "type": "array",
+            "title": "Children"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "role",
+          "children"
+        ],
+        "title": "ParentRegisterResponse"
+      },
+      "QuestionAdminView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "option_a": {
+            "type": "string",
+            "title": "Option A"
+          },
+          "option_b": {
+            "type": "string",
+            "title": "Option B"
+          },
+          "option_c": {
+            "type": "string",
+            "title": "Option C"
+          },
+          "option_d": {
+            "type": "string",
+            "title": "Option D"
+          },
+          "points": {
+            "type": "number",
+            "title": "Points"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "correct_option": {
+            "type": "string",
+            "title": "Correct Option"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "option_a",
+          "option_b",
+          "option_c",
+          "option_d",
+          "points",
+          "correct_option"
+        ],
+        "title": "QuestionAdminView"
+      },
+      "QuestionBreakdown": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "option_a": {
+            "type": "string",
+            "title": "Option A"
+          },
+          "option_b": {
+            "type": "string",
+            "title": "Option B"
+          },
+          "option_c": {
+            "type": "string",
+            "title": "Option C"
+          },
+          "option_d": {
+            "type": "string",
+            "title": "Option D"
+          },
+          "candidate_selected": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Selected"
+          },
+          "correct_option": {
+            "type": "string",
+            "title": "Correct Option"
+          },
+          "is_correct": {
+            "type": "boolean",
+            "title": "Is Correct"
+          },
+          "points_possible": {
+            "type": "number",
+            "title": "Points Possible"
+          },
+          "points_earned": {
+            "type": "number",
+            "title": "Points Earned"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "text",
+          "option_a",
+          "option_b",
+          "option_c",
+          "option_d",
+          "correct_option",
+          "is_correct",
+          "points_possible",
+          "points_earned"
+        ],
+        "title": "QuestionBreakdown"
+      },
+      "QuestionCreate": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "option_a": {
+            "type": "string",
+            "title": "Option A"
+          },
+          "option_b": {
+            "type": "string",
+            "title": "Option B"
+          },
+          "option_c": {
+            "type": "string",
+            "title": "Option C"
+          },
+          "option_d": {
+            "type": "string",
+            "title": "Option D"
+          },
+          "correct_option": {
+            "type": "string",
+            "pattern": "^[A-D]$",
+            "title": "Correct Option"
+          },
+          "points": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Points",
+            "default": 1
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "option_a",
+          "option_b",
+          "option_c",
+          "option_d",
+          "correct_option"
+        ],
+        "title": "QuestionCreate"
+      },
+      "QuestionPublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "option_a": {
+            "type": "string",
+            "title": "Option A"
+          },
+          "option_b": {
+            "type": "string",
+            "title": "Option B"
+          },
+          "option_c": {
+            "type": "string",
+            "title": "Option C"
+          },
+          "option_d": {
+            "type": "string",
+            "title": "Option D"
+          },
+          "points": {
+            "type": "number",
+            "title": "Points"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "option_a",
+          "option_b",
+          "option_c",
+          "option_d",
+          "points"
+        ],
+        "title": "QuestionPublic"
+      },
+      "ResponsePublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "selected_option": {
+            "type": "string",
+            "title": "Selected Option"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          },
+          "checksum": {
+            "type": "string",
+            "title": "Checksum"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "question_id",
+          "selected_option",
+          "submitted_at",
+          "checksum"
+        ],
+        "title": "ResponsePublic"
+      },
+      "ResponseSubmit": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "selected_option": {
+            "type": "string",
+            "pattern": "^[A-D]$",
+            "title": "Selected Option"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "selected_option",
+          "session_id"
+        ],
+        "title": "ResponseSubmit"
+      },
+      "ResultBreakdown": {
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/ResultPublic"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionBreakdown"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "result",
+          "questions"
+        ],
+        "title": "ResultBreakdown"
+      },
+      "ResultPublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "exam_id": {
+            "type": "string",
+            "title": "Exam Id"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "total_questions": {
+            "type": "integer",
+            "title": "Total Questions"
+          },
+          "max_score": {
+            "type": "number",
+            "title": "Max Score"
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage"
+          },
+          "terminated": {
+            "type": "boolean",
+            "title": "Terminated"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          },
+          "checksum": {
+            "type": "string",
+            "title": "Checksum"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "exam_id",
+          "score",
+          "total_questions",
+          "max_score",
+          "percentage",
+          "terminated",
+          "submitted_at",
+          "checksum"
+        ],
+        "title": "ResultPublic"
+      },
+      "ResultWithExam": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "exam_id": {
+            "type": "string",
+            "title": "Exam Id"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "total_questions": {
+            "type": "integer",
+            "title": "Total Questions"
+          },
+          "max_score": {
+            "type": "number",
+            "title": "Max Score"
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage"
+          },
+          "terminated": {
+            "type": "boolean",
+            "title": "Terminated"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          },
+          "checksum": {
+            "type": "string",
+            "title": "Checksum"
+          },
+          "exam_title": {
+            "type": "string",
+            "title": "Exam Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "exam_id",
+          "score",
+          "total_questions",
+          "max_score",
+          "percentage",
+          "terminated",
+          "submitted_at",
+          "checksum",
+          "exam_title"
+        ],
+        "title": "ResultWithExam"
+      },
+      "SecurityLogPublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "endpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_type",
+          "actor",
+          "ip_address",
+          "endpoint",
+          "details",
+          "created_at"
+        ],
+        "title": "SecurityLogPublic"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "role"
+        ],
+        "title": "TokenResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/auth/candidate/login"
+          }
+        }
+      }
+    }
+  }
+}

@@ -149,6 +149,14 @@ export const CandidateLoginPage: React.FC = () => {
                 <label htmlFor="candidate_password_input" className="text-xs font-bold text-stone-700">
                   Password *
                 </label>
+                <button
+                  type="button"
+                  id="link_forgot_password"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-xs font-bold text-emerald-800 hover:text-emerald-900 hover:underline"
+                >
+                  Forgot password?
+                </button>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />

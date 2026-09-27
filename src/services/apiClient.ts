@@ -1,6 +1,7 @@
 import {
   User,
   Exam,
+  ExamStatus,
   Question,
   ExamResult,
   SecurityLogEvent,
@@ -23,7 +24,10 @@ import {
   ChildSummary,
   ChildExamStatus,
   ChildResultWithExam,
+  PasswordResetRequest,
+  StudentPasswordRecord,
 } from '../types';
+import { passwordService } from './passwordService';
 import {
   authApi,
   coursesApi,
@@ -55,6 +59,8 @@ const STORAGE_KEYS = {
   CANDIDATE_USER: 'mapolycbe_candidate_user_v1',
   ADMIN_USER: 'mapolycbe_admin_user_v1',
   PARENT_USER: 'mapolycbe_parent_user_v1',
+  CUSTOM_EXAMS: 'mapolycbe_custom_exams_v2',
+  DELETED_EXAM_IDS: 'mapolycbe_deleted_exams_v2',
 };
 
 function decodeJwtSub(token?: string | null): string {
@@ -80,6 +86,52 @@ class LiveApiClient {
 
   private getParentToken(): string | null {
     return localStorage.getItem(STORAGE_KEYS.PARENT_AUTH_TOKEN);
+  }
+
+  private getCustomExams(): Exam[] {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_EXAMS);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveCustomExam(exam: Exam): void {
+    try {
+      const list = this.getCustomExams();
+      const existingIdx = list.findIndex((e) => e.id === exam.id);
+      if (existingIdx >= 0) {
+        list[existingIdx] = { ...list[existingIdx], ...exam };
+      } else {
+        list.unshift(exam);
+      }
+      localStorage.setItem(STORAGE_KEYS.CUSTOM_EXAMS, JSON.stringify(list));
+    } catch {
+      // ignore quota errors
+    }
+  }
+
+  private getDeletedExamIds(): Set<string> {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.DELETED_EXAM_IDS);
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  private markExamDeleted(examId: string): void {
+    try {
+      const deleted = this.getDeletedExamIds();
+      deleted.add(examId);
+      localStorage.setItem(STORAGE_KEYS.DELETED_EXAM_IDS, JSON.stringify(Array.from(deleted)));
+
+      const list = this.getCustomExams().filter((e) => e.id !== examId);
+      localStorage.setItem(STORAGE_KEYS.CUSTOM_EXAMS, JSON.stringify(list));
+    } catch {
+      // ignore
+    }
   }
 
   private rethrow(err: any): never {
@@ -120,6 +172,15 @@ class LiveApiClient {
         level: data.level,
       });
 
+      // Register initial password record
+      passwordService.registerCandidatePassword({
+        matricNo: data.matric_no.trim(),
+        email: data.email.trim(),
+        fullName: data.full_name.trim(),
+        level: data.level,
+        password: data.password,
+      });
+
       const user: User = {
         id: decodeJwtSub(res.access_token) || data.matric_no,
         name: data.full_name,
@@ -141,24 +202,74 @@ class LiveApiClient {
     identifier: string,
     password?: string
   ): Promise<{ token: string; user: User }> {
+    const studentRecord = passwordService.getStudentRecord(identifier);
+
+    // If student record exists in password store, verify current password
+    if (studentRecord && password) {
+      if (studentRecord.currentPassword !== password) {
+        throw new ApiError(
+          401,
+          'Invalid credentials. If your password was recently reset by an administrator or changed from your profile, please use the updated password.'
+        );
+      }
+    }
+
+    const passwordToSendToBackend = studentRecord?.initialBackendPassword || password || '';
+
     try {
       const res = await authApi.candidateLogin({
         identifier: identifier.trim(),
-        password: password || '',
+        password: passwordToSendToBackend,
       });
 
       const user: User = {
         id: decodeJwtSub(res.access_token) || identifier,
-        name: identifier.startsWith('MAPOLY') || identifier.startsWith('CBT') ? identifier : identifier.split('@')[0],
-        email: identifier.includes('@') ? identifier : `${identifier.toLowerCase().replace(/[^a-z0-9]/g, '')}@mapoly.edu.ng`,
-        regNumber: identifier,
+        name: studentRecord?.fullName || (identifier.startsWith('MAPOLY') || identifier.startsWith('CBT') ? identifier : identifier.split('@')[0]),
+        email: studentRecord?.email || (identifier.includes('@') ? identifier : `${identifier.toLowerCase().replace(/[^a-z0-9]/g, '')}@mapoly.edu.ng`),
+        regNumber: studentRecord?.matricNo || identifier,
+        level: studentRecord?.level,
         role: 'candidate',
-        registeredAt: new Date().toISOString(),
+        registeredAt: studentRecord?.updatedAt || new Date().toISOString(),
         lastLoginAt: new Date().toISOString(),
       };
 
+      // If no password record existed yet, record it
+      if (password && !studentRecord) {
+        passwordService.registerCandidatePassword({
+          matricNo: identifier,
+          email: user.email,
+          fullName: user.name,
+          password,
+        });
+      }
+
       return { token: res.access_token, user };
     } catch (err: any) {
+      // If backend threw 401 because candidate wasn't registered in the remote ephemeral DB yet:
+      if (err.status === 401 && studentRecord) {
+        try {
+          const regRes = await authApi.candidateRegister({
+            matric_no: studentRecord.matricNo,
+            email: studentRecord.email || `${studentRecord.matricNo.toLowerCase().replace(/[^a-z0-9]/g, '')}@mapoly.edu.ng`,
+            full_name: studentRecord.fullName || 'Candidate',
+            password: passwordToSendToBackend || 'Candidate@123!',
+            level: studentRecord.level || 'ND1',
+          });
+          const user: User = {
+            id: decodeJwtSub(regRes.access_token) || studentRecord.matricNo,
+            name: studentRecord.fullName || 'Candidate',
+            email: studentRecord.email || `${studentRecord.matricNo.toLowerCase().replace(/[^a-z0-9]/g, '')}@mapoly.edu.ng`,
+            regNumber: studentRecord.matricNo,
+            level: studentRecord.level || 'ND1',
+            role: 'candidate',
+            registeredAt: new Date().toISOString(),
+            lastLoginAt: new Date().toISOString(),
+          };
+          return { token: regRes.access_token, user };
+        } catch {
+          // quiet fallback to rethrow original
+        }
+      }
       this.rethrow(err);
     }
   }
@@ -390,32 +501,65 @@ class LiveApiClient {
   public async getExams(): Promise<Exam[]> {
     try {
       const token = this.getCandidateToken() || this.getAdminToken();
-      const rawList = await examsApi.getExams(token);
-      return (rawList || []).map((item: any, idx: number) => ({
-        id: item.id,
-        title: item.title,
-        code: item.title.includes(':') ? item.title.split(':')[0].trim() : `CBE-${100 + idx}`,
-        category: item.level ? (ACADEMIC_LEVEL_MAP[item.level as AcademicLevel] || item.level) : 'Official Assessment',
-        description: item.description || 'Moshood Abiola Polytechnic computer-based examination.',
-        durationMinutes: item.duration_minutes || 60,
-        totalQuestions: item.total_questions || 0,
-        passingScorePercent: 50,
-        status: item.is_active !== false ? 'published' : 'draft',
-        courseId: item.course_id,
-        course_id: item.course_id,
-        level: item.level,
-        instructions: [
-          'Read each question thoroughly before selecting an option.',
-          'Answers are synchronized to the cryptographic ledger in real time.',
-          'Any loss of browser focus or tab switching will be registered on security logs.',
-          'Ensure you submit your examination before the allotted countdown expires.',
-        ],
-        randomizeQuestions: false,
-        randomizeOptions: false,
-        showResultsImmediately: true,
-        createdAt: item.created_at || new Date().toISOString(),
-        updatedAt: item.created_at || new Date().toISOString(),
-      }));
+      let rawList: any[] = [];
+      try {
+        rawList = await examsApi.getExams(token);
+      } catch (e) {
+        console.warn('Backend list exams failed or not reachable:', e);
+      }
+
+      const deletedIds = this.getDeletedExamIds();
+      const customExams = this.getCustomExams();
+      const examMap = new Map<string, Exam>();
+
+      // 1. Process backend returned exams
+      (rawList || []).forEach((item: any, idx: number) => {
+        if (deletedIds.has(item.id)) return;
+        const code = item.title.includes(':') ? item.title.split(':')[0].trim() : `CBE-${100 + idx}`;
+        examMap.set(item.id, {
+          id: item.id,
+          title: item.title,
+          code,
+          category: item.level ? (ACADEMIC_LEVEL_MAP[item.level as AcademicLevel] || item.level) : 'Official Assessment',
+          description: item.description || 'Moshood Abiola Polytechnic computer-based examination.',
+          durationMinutes: item.duration_minutes || 60,
+          totalQuestions: item.total_questions || 0,
+          passingScorePercent: item.pass_mark_percentage || 50,
+          status: item.is_active !== false ? 'published' : 'draft',
+          courseId: item.course_id,
+          course_id: item.course_id,
+          level: item.level,
+          instructions: [
+            'Read each question thoroughly before selecting an option.',
+            'Answers are synchronized to the cryptographic ledger in real time.',
+            'Any loss of browser focus or tab switching will be registered on security logs.',
+            'Ensure you submit your examination before the allotted countdown expires.',
+          ],
+          randomizeQuestions: item.shuffle_questions ?? false,
+          randomizeOptions: item.shuffle_options ?? false,
+          showResultsImmediately: true,
+          createdAt: item.created_at || new Date().toISOString(),
+          updatedAt: item.created_at || new Date().toISOString(),
+        });
+      });
+
+      // 2. Merge custom/created exams (ensures newly created exams appear even if backend hides inactive ones)
+      customExams.forEach((ce) => {
+        if (deletedIds.has(ce.id)) return;
+        const existing = examMap.get(ce.id);
+        if (existing) {
+          examMap.set(ce.id, {
+            ...existing,
+            ...ce,
+            status: ce.status || existing.status,
+            totalQuestions: Math.max(existing.totalQuestions, ce.totalQuestions || 0),
+          });
+        } else {
+          examMap.set(ce.id, ce);
+        }
+      });
+
+      return Array.from(examMap.values());
     } catch (err: any) {
       this.rethrow(err);
     }
@@ -426,7 +570,16 @@ class LiveApiClient {
       const candidateToken = this.getCandidateToken();
       const adminToken = this.getAdminToken();
       const token = candidateToken || adminToken;
-      const item = await examsApi.getExam(examId, token);
+      let item: any = null;
+      try {
+        item = await examsApi.getExam(examId, token);
+      } catch (err) {
+        // Fallback to custom exams store if backend 404
+        const custom = this.getCustomExams().find((e) => e.id === examId);
+        if (custom) return custom;
+        throw err;
+      }
+
       let questions: Question[] = [];
 
       if (adminToken) {
@@ -445,27 +598,29 @@ class LiveApiClient {
         }
       }
 
+      const customExam = this.getCustomExams().find((e) => e.id === examId);
+
       return {
         id: item.id,
         title: item.title,
-        code: item.title.includes(':') ? item.title.split(':')[0].trim() : 'CBE-EXAM',
-        category: item.level ? (ACADEMIC_LEVEL_MAP[item.level as AcademicLevel] || item.level) : 'Official Assessment',
-        description: item.description || 'Moshood Abiola Polytechnic computer-based examination.',
+        code: customExam?.code || (item.title.includes(':') ? item.title.split(':')[0].trim() : 'CBE-EXAM'),
+        category: customExam?.category || (item.level ? (ACADEMIC_LEVEL_MAP[item.level as AcademicLevel] || item.level) : 'Official Assessment'),
+        description: item.description || customExam?.description || 'Moshood Abiola Polytechnic computer-based examination.',
         durationMinutes: item.duration_minutes || 60,
-        totalQuestions: questions.length,
-        passingScorePercent: 50,
-        status: item.is_active !== false ? 'published' : 'draft',
+        totalQuestions: questions.length || customExam?.totalQuestions || 0,
+        passingScorePercent: customExam?.passingScorePercent || item.pass_mark_percentage || 50,
+        status: customExam?.status || (item.is_active !== false ? 'published' : 'draft'),
         courseId: item.course_id,
         course_id: item.course_id,
         level: item.level,
-        instructions: [
+        instructions: customExam?.instructions || [
           'Read each question thoroughly before selecting an option.',
           'Answers are synchronized to the cryptographic ledger in real time.',
           'Any loss of browser focus or tab switching will be registered on security logs.',
           'Ensure you submit your examination before the allotted countdown expires.',
         ],
-        randomizeQuestions: false,
-        randomizeOptions: false,
+        randomizeQuestions: item.shuffle_questions ?? false,
+        randomizeOptions: item.shuffle_options ?? false,
         showResultsImmediately: true,
         createdAt: item.created_at || new Date().toISOString(),
         updatedAt: item.created_at || new Date().toISOString(),
@@ -489,7 +644,8 @@ class LiveApiClient {
         { id: 'D', text: q.option_d || 'Option D' },
       ],
       correctOptionId: isAdmin ? (q.correct_option || 'A') : '',
-      points: 1,
+      points: q.points || 1,
+      explanation: q.explanation,
     }));
   }
 
@@ -499,6 +655,11 @@ class LiveApiClient {
     courseId?: string;
     description?: string;
     durationMinutes: number;
+    code?: string;
+    category?: string;
+    passingScorePercent?: number;
+    status?: ExamStatus;
+    instructions?: string[];
   }): Promise<Exam> {
     const adminToken = this.getAdminToken();
     if (!adminToken) throw new ApiError(401, 'Admin authorization required');
@@ -507,6 +668,8 @@ class LiveApiClient {
     const description = examData.description || '';
     const durationMinutes = examData.durationMinutes || 60;
     const courseId = examData.course_id || examData.courseId || '';
+    const examCode = examData.code?.trim().toUpperCase() || (title.includes(':') ? title.split(':')[0].trim() : 'CBE-NEW');
+    const examStatus: ExamStatus = examData.status || 'published';
 
     if (!courseId) {
       throw new ApiError(422, 'Course is required to create an examination.');
@@ -523,37 +686,69 @@ class LiveApiClient {
         adminToken
       );
 
-      return {
+      const createdExam: Exam = {
         id: res.id,
         title: res.title,
-        code: res.title.includes(':') ? res.title.split(':')[0].trim() : 'CBE-NEW',
-        category: (examData as any).category || 'Official Assessment',
-        description: res.description || '',
-        durationMinutes: res.duration_minutes,
+        code: examCode,
+        category: examData.category || 'Computer Science',
+        description: res.description || description,
+        durationMinutes: res.duration_minutes || durationMinutes,
         totalQuestions: 0,
-        passingScorePercent: 50,
-        status: res.is_active ? 'published' : 'draft',
+        passingScorePercent: examData.passingScorePercent || 50,
+        status: examStatus,
         courseId: res.course_id || courseId,
         course_id: res.course_id || courseId,
         level: res.level,
-        instructions: ['Follow all official exam guidelines.'],
+        instructions: examData.instructions || [
+          'Read each question thoroughly before selecting an option.',
+          'Answers are synchronized to the cryptographic ledger in real time.',
+          'Any loss of browser focus or tab switching will be registered on security logs.',
+          'Ensure you submit your examination before the allotted countdown expires.',
+        ],
         randomizeQuestions: false,
         randomizeOptions: false,
         showResultsImmediately: true,
-        createdAt: res.created_at,
-        updatedAt: res.created_at,
+        createdAt: res.created_at || new Date().toISOString(),
+        updatedAt: res.created_at || new Date().toISOString(),
         questions: [],
       };
+
+      // Persist locally so it displays immediately regardless of backend is_active filter
+      this.saveCustomExam(createdExam);
+
+      return createdExam;
     } catch (err: any) {
       this.rethrow(err);
     }
   }
 
   public async updateExam(examId: string, updates: Partial<Exam>): Promise<Exam> {
-    return this.getExamById(examId);
+    const list = this.getCustomExams();
+    let existing = list.find((e) => e.id === examId);
+    if (!existing) {
+      try {
+        existing = await this.getExamById(examId);
+      } catch {
+        existing = undefined;
+      }
+    }
+
+    if (!existing) {
+      throw new ApiError(404, 'Examination not found.');
+    }
+
+    const updated: Exam = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveCustomExam(updated);
+    return updated;
   }
 
   public async deleteExam(examId: string): Promise<boolean> {
+    this.markExamDeleted(examId);
     return true;
   }
 
@@ -591,6 +786,14 @@ class LiveApiClient {
         adminToken
       );
 
+      // Increment question count in custom exams store
+      const customList = this.getCustomExams();
+      const exIdx = customList.findIndex((e) => e.id === examId);
+      if (exIdx >= 0) {
+        customList[exIdx].totalQuestions = (customList[exIdx].totalQuestions || 0) + 1;
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_EXAMS, JSON.stringify(customList));
+      }
+
       return {
         id: res.id,
         examId,
@@ -604,6 +807,7 @@ class LiveApiClient {
         ],
         correctOptionId: res.correct_option,
         points: questionData.points || 1,
+        explanation: questionData.explanation,
       };
     } catch (err: any) {
       this.rethrow(err);
@@ -1096,6 +1300,78 @@ class LiveApiClient {
         activeLiveExamsNow: 0,
       };
     }
+  }
+
+  // -------------------------------------------------------------
+  // PASSWORD MANAGEMENT & CREDENTIAL LIFECYCLE
+  // -------------------------------------------------------------
+
+  public async studentChangePassword(params: {
+    matricNo: string;
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<void> {
+    const res = passwordService.studentChangePassword(params);
+    if (!res.success) {
+      throw new ApiError(400, res.message || 'Failed to update password');
+    }
+  }
+
+  public async adminChangeStudentPassword(params: {
+    candidateId?: string;
+    matricNo: string;
+    email?: string;
+    fullName?: string;
+    level?: AcademicLevel;
+    newPassword: string;
+    adminId?: string;
+    adminNotes?: string;
+  }): Promise<StudentPasswordRecord> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required to change candidate passwords');
+
+    return passwordService.adminSetStudentPassword(params);
+  }
+
+  public async createPasswordResetRequest(params: {
+    matricNo: string;
+    email: string;
+    fullName?: string;
+    reason?: string;
+  }): Promise<PasswordResetRequest> {
+    return passwordService.createPasswordResetRequest(params);
+  }
+
+  public async getPasswordResetRequests(): Promise<PasswordResetRequest[]> {
+    return passwordService.getPasswordResetRequests();
+  }
+
+  public async resolvePasswordResetRequest(
+    requestId: string,
+    params: { newPassword: string; adminId?: string; adminNotes?: string }
+  ): Promise<PasswordResetRequest> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    const res = passwordService.resolvePasswordResetRequest(requestId, params);
+    if (!res) throw new ApiError(404, 'Password reset request not found');
+    return res;
+  }
+
+  public async rejectPasswordResetRequest(
+    requestId: string,
+    adminNotes?: string
+  ): Promise<PasswordResetRequest> {
+    const adminToken = this.getAdminToken();
+    if (!adminToken) throw new ApiError(401, 'Admin authorization required');
+
+    const res = passwordService.rejectPasswordResetRequest(requestId, adminNotes);
+    if (!res) throw new ApiError(404, 'Password reset request not found');
+    return res;
+  }
+
+  public getStudentRecord(identifier: string): StudentPasswordRecord | null {
+    return passwordService.getStudentRecord(identifier);
   }
 
   private normalizeEventType(rawType: string): SecurityEventType {

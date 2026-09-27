@@ -107,8 +107,8 @@ export const RouterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const navigate = useCallback((to: string, state?: unknown) => {
     if (typeof window !== 'undefined') {
+      window.history.pushState({ usr: state }, '', to);
       const normalizedTo = normalizePath(to);
-      window.history.pushState({ usr: state }, '', normalizedTo);
       setCurrentPath(normalizedTo);
       setLocationState(state);
       window.scrollTo(0, 0);
@@ -144,21 +144,34 @@ export function useLocationState<T = unknown>(): T | undefined {
 
 export function useParams(): Record<string, string> {
   const { currentPath } = useRouter();
+  const params: Record<string, string> = {};
+
+  // Extract query parameters if present
+  if (currentPath.includes('?')) {
+    const searchPart = currentPath.split('?')[1];
+    const searchParams = new URLSearchParams(searchPart);
+    searchParams.forEach((value, key) => {
+      params[key] = value;
+    });
+  }
+
   // Match current path against known parameterized routes
+  const pathWithoutQuery = currentPath.split('?')[0];
   const knownPatterns = [
     '/exam/:examId/start',
     '/exam/:examId/take',
     '/exam/:examId/submitted',
     '/admin/exams/:examId/questions',
+    '/admin/questions/:examId',
     '/results/:resultId',
   ];
 
   for (const pattern of knownPatterns) {
-    const match = matchPath(pattern, currentPath);
+    const match = matchPath(pattern, pathWithoutQuery);
     if (match) {
-      return match.params;
+      return { ...params, ...match.params };
     }
   }
 
-  return {};
+  return params;
 }

@@ -32,7 +32,8 @@ export const AdminManageExamsPage: React.FC = () => {
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
 
-  const fetchExams = async () => {
+  const fetchExams = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const data = await apiClient.getExams();
       setExams(data);
@@ -219,7 +220,7 @@ export const AdminManageExamsPage: React.FC = () => {
                           <button
                             type="button"
                             id={`btn_manage_questions_${exam.id}`}
-                            onClick={() => navigate(`/admin/questions`)}
+                            onClick={() => navigate(`/admin/questions?examId=${exam.id}`)}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-800 text-emerald-900 hover:text-white transition border border-emerald-300 text-xs font-bold"
                             title="Manage & Add Questions"
                           >

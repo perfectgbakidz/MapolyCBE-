@@ -22,9 +22,12 @@ export const ExamSubmittedPage: React.FC = () => {
   const { success } = useToast();
   const examId = params.examId;
 
-  // Extract receipt checksum from URL query parameter
+  // Extract receipt checksum and scores from URL query parameters
   const urlParams = new URLSearchParams(window.location.search);
   const receipt = urlParams.get('receipt') || 'TX-CBT-7F4B2A91D0E3-5C82A1';
+  const scoreParam = urlParams.get('score');
+  const totalParam = urlParams.get('total');
+  const percentageParam = urlParams.get('percentage');
 
   useEffect(() => {
     // Launch celebratory confetti burst
@@ -70,6 +73,29 @@ export const ExamSubmittedPage: React.FC = () => {
           <p className="text-xs sm:text-sm text-stone-600 mb-6 leading-relaxed max-w-md mx-auto font-medium">
             Your responses have been successfully graded, sealed, and written to the tamper-proof ledger.
           </p>
+
+          {/* Real Score Over Number of Exam Answered */}
+          {scoreParam !== null && totalParam !== null && (
+            <div id="submitted_score_card" className="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-300 text-center mb-6 animate-fadeIn">
+              <span className="text-[11px] uppercase tracking-wider text-emerald-900 font-bold block mb-1">
+                Your Examination Score
+              </span>
+              <div className="flex items-baseline justify-center gap-2">
+                <span className="font-mono text-4xl font-black text-emerald-950">
+                  {scoreParam}
+                </span>
+                <span className="font-mono text-xl font-bold text-emerald-700">
+                  / {totalParam}
+                </span>
+              </div>
+              <p className="text-xs text-emerald-900 font-medium mt-1">
+                <strong>{scoreParam}</strong> of <strong>{totalParam}</strong> questions answered correctly{' '}
+                {percentageParam ? (
+                  <span className="font-mono font-bold">({percentageParam}%)</span>
+                ) : null}
+              </p>
+            </div>
+          )}
 
           {/* Receipt Box */}
           <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-left mb-6">

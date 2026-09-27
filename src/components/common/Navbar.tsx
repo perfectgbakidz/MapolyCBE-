@@ -10,6 +10,7 @@ import {
   LogIn,
   UserPlus,
   Users,
+  KeyRound,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -94,6 +95,19 @@ export const Navbar: React.FC = () => {
                   <Award className="w-4 h-4" />
                   My Results
                 </button>
+                <button
+                  type="button"
+                  id="nav_link_profile"
+                  onClick={() => navigate('/profile')}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                    currentPath === '/profile'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-300/80 font-bold'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                  }`}
+                >
+                  <KeyRound className="w-4 h-4" />
+                  Profile
+                </button>
               </div>
             )}
 
@@ -121,13 +135,25 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-3">
             {candidateToken && candidateUser ? (
               <div className="flex items-center gap-3 pl-2">
-                <div className="hidden sm:flex flex-col text-right">
-                  <span className="text-xs font-bold text-stone-900">{candidateUser.name}</span>
-                  <span className="text-[10px] font-mono text-emerald-800 font-semibold">{candidateUser.regNumber || 'CANDIDATE'}</span>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-emerald-800 text-white font-bold text-xs flex items-center justify-center shadow-xs">
-                  {candidateUser.name.charAt(0)}
-                </div>
+                <button
+                  type="button"
+                  id="nav_candidate_profile_btn"
+                  onClick={() => navigate('/profile')}
+                  className="flex items-center gap-2.5 hover:opacity-85 transition text-left group"
+                  title="Candidate Profile & Change Password"
+                >
+                  <div className="hidden sm:flex flex-col text-right">
+                    <span className="text-xs font-bold text-stone-900 group-hover:text-emerald-800 transition-colors">
+                      {candidateUser.name}
+                    </span>
+                    <span className="text-[10px] font-mono text-emerald-800 font-semibold">
+                      {candidateUser.regNumber || 'CANDIDATE'}
+                    </span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-emerald-800 text-white font-bold text-xs flex items-center justify-center shadow-xs group-hover:ring-2 group-hover:ring-emerald-700/50 transition">
+                    {candidateUser.name.charAt(0)}
+                  </div>
+                </button>
                 <button
                   type="button"
                   id="candidate_logout_btn"

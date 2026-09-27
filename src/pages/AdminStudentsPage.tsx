@@ -11,6 +11,7 @@ import {
   ACADEMIC_LEVELS,
   ACADEMIC_LEVEL_MAP,
   SingleIntegrityVerification,
+  PasswordResetRequest,
 } from '../types';
 import { AdminNavbar } from '../components/common/AdminNavbar';
 import { Footer } from '../components/common/Footer';
@@ -40,6 +41,13 @@ import {
   Save,
   Clock,
   Fingerprint,
+  KeyRound,
+  Copy,
+  Sparkles,
+  Check,
+  Inbox,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 export const AdminStudentsPage: React.FC = () => {
@@ -73,6 +81,34 @@ export const AdminStudentsPage: React.FC = () => {
 
   // Action busy states
   const [actionBusyId, setActionBusyId] = useState<string | null>(null);
+
+  // Password Management State
+  const [passwordModalStudent, setPasswordModalStudent] = useState<CandidateAdminView | null>(null);
+  const [newPasswordInput, setNewPasswordInput] = useState<string>('');
+  const [adminNoteInput, setAdminNoteInput] = useState<string>('');
+  const [isChangingPassword, setIsChangingPassword] = useState<boolean>(false);
+  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState<{ matricNo: string; newPass: string } | null>(null);
+  const [copiedToClipboard, setCopiedToClipboard] = useState<boolean>(false);
+  const [showPasswordInModal, setShowPasswordInModal] = useState<boolean>(true);
+
+  // Reset Requests State
+  const [showResetRequestsModal, setShowResetRequestsModal] = useState<boolean>(false);
+  const [resetRequests, setResetRequests] = useState<PasswordResetRequest[]>([]);
+  const [pendingResetCount, setPendingResetCount] = useState<number>(0);
+
+  const loadResetRequests = useCallback(async () => {
+    try {
+      const list = await apiClient.getPasswordResetRequests();
+      setResetRequests(list);
+      setPendingResetCount(list.filter((r) => r.status === 'pending').length);
+    } catch {
+      // quiet fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    loadResetRequests();
+  }, [loadResetRequests]);
 
   // Fetch student directory
   const loadStudents = useCallback(async () => {
@@ -205,6 +241,98 @@ export const AdminStudentsPage: React.FC = () => {
     }
   };
 
+  // Open Password Modal
+  const handleOpenChangePassword = (student: CandidateAdminView) => {
+    setPasswordModalStudent(student);
+    setNewPasswordInput('');
+    setAdminNoteInput('');
+    setPasswordChangeSuccess(null);
+    setCopiedToClipboard(false);
+  };
+
+  const handleGenerateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let rand = '';
+    for (let i = 0; i < 6; i++) {
+      rand += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const generated = `Mapoly@${rand}!`;
+    setNewPasswordInput(generated);
+  };
+
+  const handleSaveStudentPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordModalStudent || !newPasswordInput.trim()) return;
+
+    if (newPasswordInput.trim().length < 8) {
+      error('Password Too Short', 'Password must be at least 8 characters long.');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await apiClient.adminChangeStudentPassword({
+        candidateId: passwordModalStudent.id,
+        matricNo: passwordModalStudent.matric_no,
+        email: passwordModalStudent.email,
+        fullName: passwordModalStudent.full_name,
+        level: passwordModalStudent.level,
+        newPassword: newPasswordInput.trim(),
+        adminNotes: adminNoteInput.trim() || 'Admin-initiated password change via Examination Console',
+      });
+
+      success('Password Updated', `New password assigned to candidate ${passwordModalStudent.full_name}.`);
+      setPasswordChangeSuccess({
+        matricNo: passwordModalStudent.matric_no,
+        newPass: newPasswordInput.trim(),
+      });
+      loadResetRequests();
+    } catch (err: any) {
+      error('Update Failed', err.message || 'Failed to update student password');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleApproveResetRequest = (req: PasswordResetRequest) => {
+    const matchingStudent = students.find((s) => s.matric_no.toLowerCase() === req.matricNo.toLowerCase());
+    if (matchingStudent) {
+      setPasswordModalStudent(matchingStudent);
+    } else {
+      setPasswordModalStudent({
+        id: req.matricNo,
+        matric_no: req.matricNo,
+        full_name: req.fullName || 'Candidate',
+        email: req.email,
+        level: 'ND1',
+        is_active: true,
+        is_locked: false,
+        failed_login_attempts: 0,
+        created_at: req.requestedAt,
+      });
+    }
+    handleGenerateRandomPassword();
+    setAdminNoteInput(`Resolving request ${req.id}: ${req.reason || 'Candidate password reset'}`);
+    setShowResetRequestsModal(false);
+  };
+
+  const handleRejectResetRequest = async (requestId: string) => {
+    try {
+      await apiClient.rejectPasswordResetRequest(requestId, 'Dismissed by administrator');
+      info('Request Dismissed', 'Password reset request was dismissed.');
+      loadResetRequests();
+    } catch (err: any) {
+      error('Error', err.message || 'Failed to dismiss request');
+    }
+  };
+
+  const handleCopyCredentials = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedToClipboard(true);
+    success('Copied', 'Candidate credentials copied to clipboard.');
+    setTimeout(() => setCopiedToClipboard(false), 3000);
+  };
+
   // Verify Result Cryptographic Checksum
   const handleVerifyResult = async (resultId: string) => {
     setVerifyingResultId(resultId);
@@ -252,6 +380,26 @@ export const AdminStudentsPage: React.FC = () => {
 
           {/* Quick Actions */}
           <div className="flex items-center gap-3">
+            {/* Password Reset Requests Button */}
+            <button
+              type="button"
+              id="admin_reset_requests_btn"
+              onClick={() => {
+                loadResetRequests();
+                setShowResetRequestsModal(true);
+              }}
+              className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold border border-stone-300 transition shadow-xs"
+              title="Review candidate password reset requests"
+            >
+              <KeyRound className="w-4 h-4 text-amber-700" />
+              <span>Password Requests</span>
+              {pendingResetCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white font-black text-[10px] animate-pulse">
+                  {pendingResetCount}
+                </span>
+              )}
+            </button>
+
             <button
               type="button"
               id="admin_refresh_students_btn"
@@ -513,6 +661,17 @@ export const AdminStudentsPage: React.FC = () => {
                               <Edit className="w-4 h-4" />
                             </button>
 
+                            {/* Change Student Password (Admin Authority) */}
+                            <button
+                              type="button"
+                              id={`btn_change_password_${student.id}`}
+                              onClick={() => handleOpenChangePassword(student)}
+                              className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition"
+                              title="Change / Reset Candidate Password"
+                            >
+                              <KeyRound className="w-4 h-4 text-amber-800" />
+                            </button>
+
                             {/* Unlock Button if locked */}
                             {student.is_locked && (
                               <button
@@ -641,15 +800,19 @@ export const AdminStudentsPage: React.FC = () => {
                           </div>
 
                           <div className="text-right sm:border-l sm:border-stone-200 sm:pl-4">
-                            <span className="text-[11px] font-bold text-stone-400 uppercase tracking-wider block">
-                              Final Score
+                            <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">
+                              Score (Correct / Total)
                             </span>
-                            <div className="flex items-baseline gap-1 sm:justify-end">
-                              <span className={`font-mono text-2xl font-black ${isPassed ? 'text-emerald-800' : 'text-rose-700'}`}>
-                                {percentage}%
+                            <div className="flex items-baseline gap-2 sm:justify-end">
+                              <span className="font-mono text-2xl font-black text-stone-900">
+                                {result.score} <span className="text-sm font-bold text-stone-500">/ {result.total_questions}</span>
                               </span>
-                              <span className="text-xs text-stone-500 font-mono font-semibold">
-                                ({result.score}/{result.total_questions} Pts)
+                              <span
+                                className={`text-xs font-bold px-2 py-0.5 rounded font-mono ${
+                                  isPassed ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-800'
+                                }`}
+                              >
+                                {percentage}%
                               </span>
                             </div>
                           </div>
@@ -911,6 +1074,326 @@ export const AdminStudentsPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL 4: ADMIN CHANGE STUDENT PASSWORD */}
+      {/* ------------------------------------------------------------- */}
+      {passwordModalStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg bg-white border border-stone-200 rounded-3xl shadow-xl overflow-hidden my-8 animate-fadeIn text-stone-900">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-stone-200 bg-stone-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-300 flex items-center justify-center text-amber-800">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-stone-900">Set Candidate Password</h3>
+                  <p className="text-xs text-stone-500 font-medium">Administrator Examination Security Override</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPasswordModalStudent(null);
+                  setPasswordChangeSuccess(null);
+                }}
+                className="text-stone-400 hover:text-stone-800 p-1.5 rounded-xl hover:bg-stone-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Candidate Summary Pill */}
+            <div className="px-6 py-3 bg-stone-100 border-b border-stone-200 text-xs flex items-center justify-between">
+              <div>
+                <span className="font-bold text-stone-800">{passwordModalStudent.full_name}</span>
+                <span className="text-stone-400 mx-2">•</span>
+                <span className="font-mono text-emerald-800 font-bold">{passwordModalStudent.matric_no}</span>
+              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-stone-200 text-stone-700 font-bold text-[10px]">
+                {passwordModalStudent.level}
+              </span>
+            </div>
+
+            {passwordChangeSuccess ? (
+              /* Success View with Credentials Card */
+              <div className="p-6 space-y-5 text-center animate-fadeIn" id="admin_password_success_view">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center justify-center text-emerald-800 mx-auto">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-bold text-stone-900">New Password Active</h4>
+                  <p className="text-xs text-stone-500 mt-0.5 font-medium">
+                    The student can now use these credentials to log in on any examination computer.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-300 text-left space-y-2 font-mono text-xs">
+                  <div className="flex justify-between items-center pb-2 border-b border-stone-200">
+                    <span className="text-stone-500 font-sans font-bold">Matric Number:</span>
+                    <span className="font-bold text-stone-900">{passwordChangeSuccess.matricNo}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-stone-500 font-sans font-bold">New Password:</span>
+                    <span className="font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                      {passwordChangeSuccess.newPass}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopyCredentials(
+                        `MAPOLY CBE Login:\nMatric No: ${passwordChangeSuccess.matricNo}\nPassword: ${passwordChangeSuccess.newPass}`
+                      )
+                    }
+                    className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs border border-stone-300 transition flex items-center justify-center gap-2"
+                  >
+                    {copiedToClipboard ? <Check className="w-4 h-4 text-emerald-700" /> : <Copy className="w-4 h-4" />}
+                    <span>{copiedToClipboard ? 'Credentials Copied!' : 'Copy Credentials'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPasswordModalStudent(null);
+                      setPasswordChangeSuccess(null);
+                    }}
+                    className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Password Change Form */
+              <form onSubmit={handleSaveStudentPassword} className="p-6 space-y-4">
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5 leading-relaxed">
+                  <ShieldCheck className="w-4 h-4 text-amber-800 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block text-stone-900">Admin Authority:</span>
+                    As an administrator, updating this password updates the candidate credential record immediately.
+                    Any pending reset requests for this matriculation number will automatically be marked resolved.
+                  </div>
+                </div>
+
+                {/* Password Input + Generator */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-stone-700">
+                      New Password <span className="text-rose-600">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateRandomPassword}
+                      className="text-[11px] font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-1 hover:underline"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Generate Secure Password</span>
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type={showPasswordInModal ? 'text' : 'password'}
+                      required
+                      value={newPasswordInput}
+                      onChange={(e) => setNewPasswordInput(e.target.value)}
+                      placeholder="Minimum 8 characters (e.g. Mapoly@2026!)"
+                      className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-stone-50 border border-stone-300 text-stone-900 text-xs font-mono font-medium focus:ring-2 focus:ring-emerald-700 focus:bg-white focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordInModal((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1"
+                    >
+                      {showPasswordInModal ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {newPasswordInput && (
+                    <p className={`text-[11px] mt-1.5 font-medium ${newPasswordInput.length >= 8 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                      {newPasswordInput.length >= 8
+                        ? `✓ Password length valid (${newPasswordInput.length} chars)`
+                        : `Password must be at least 8 characters (${newPasswordInput.length}/8)`}
+                    </p>
+                  )}
+                </div>
+
+                {/* Admin Audit Note */}
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1.5">
+                    Audit Note / Reason for Change (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={adminNoteInput}
+                    onChange={(e) => setAdminNoteInput(e.target.value)}
+                    placeholder="e.g. Requested by student at Exam Hall 3; verified with student ID card"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-stone-50 border border-stone-300 text-stone-900 text-xs font-medium focus:ring-2 focus:ring-emerald-700 focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="pt-4 border-t border-stone-200 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPasswordModalStudent(null)}
+                    className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold border border-stone-300 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isChangingPassword || newPasswordInput.trim().length < 8}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold transition shadow-xs disabled:opacity-50"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    <span>{isChangingPassword ? 'Setting Password...' : 'Save New Password'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL 5: PENDING PASSWORD RESET REQUESTS */}
+      {/* ------------------------------------------------------------- */}
+      {showResetRequestsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white border border-stone-200 rounded-3xl shadow-xl overflow-hidden my-8 animate-fadeIn text-stone-900">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-stone-200 bg-stone-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-300 flex items-center justify-center text-amber-800">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-stone-900">Candidate Password Reset Requests</h3>
+                  <p className="text-xs text-stone-500 font-medium">
+                    Review and authorize password updates submitted from the login portal
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowResetRequestsModal(false)}
+                className="text-stone-400 hover:text-stone-800 p-1.5 rounded-xl hover:bg-stone-100 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 max-h-[60vh] overflow-y-auto space-y-4">
+              {resetRequests.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="w-12 h-12 rounded-2xl bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-400 mx-auto mb-3">
+                    <Inbox className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-bold text-stone-800 mb-1">No Password Reset Requests</h4>
+                  <p className="text-xs text-stone-500 max-w-xs mx-auto">
+                    When candidates request a password reset from the examination login screen, their requests will appear here for review.
+                  </p>
+                </div>
+              ) : (
+                resetRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    className={`p-4 rounded-2xl border transition ${
+                      req.status === 'pending'
+                        ? 'bg-amber-50/40 border-amber-300/80 shadow-xs'
+                        : req.status === 'resolved'
+                        ? 'bg-stone-50 border-stone-200 opacity-80'
+                        : 'bg-stone-50 border-stone-200 opacity-60'
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-stone-900 text-sm">{req.fullName || 'Candidate'}</span>
+                          <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">
+                            {req.matricNo}
+                          </span>
+                        </div>
+                        <span className="text-xs text-stone-500">{req.email}</span>
+                      </div>
+
+                      <div>
+                        {req.status === 'pending' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold">
+                            <Clock className="w-3 h-3" /> Pending Review
+                          </span>
+                        )}
+                        {req.status === 'resolved' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-bold">
+                            <CheckCircle2 className="w-3 h-3" /> Resolved
+                          </span>
+                        )}
+                        {req.status === 'rejected' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-300 text-[11px] font-bold">
+                            <XCircle className="w-3 h-3" /> Dismissed
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-stone-700 bg-white/80 p-2.5 rounded-xl border border-stone-200 mb-3">
+                      <strong>Reason:</strong> {req.reason || 'Candidate requested password reset via portal'}
+                    </p>
+
+                    <div className="flex items-center justify-between text-[11px] text-stone-500 pt-1">
+                      <span>Requested: {new Date(req.requestedAt).toLocaleString()}</span>
+
+                      {req.status === 'pending' && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleRejectResetRequest(req.id)}
+                            className="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold transition border border-stone-300"
+                          >
+                            Dismiss
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleApproveResetRequest(req)}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-bold transition shadow-xs flex items-center gap-1.5"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                            <span>Assign Password</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {req.status === 'resolved' && req.temporaryPasswordAssigned && (
+                        <span className="font-mono text-emerald-800 font-bold">
+                          Assigned: {req.temporaryPasswordAssigned}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 px-6 border-t border-stone-200 bg-stone-50 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowResetRequestsModal(false)}
+                className="px-5 py-2.5 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-bold transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
