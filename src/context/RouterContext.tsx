@@ -69,6 +69,17 @@ function extractCurrentPath(): string {
   if (searchParams.has('admin') || searchParams.has('admin_login')) {
     return '/admin/login';
   }
+  if (
+    searchParams.has('forgot') ||
+    searchParams.has('forgot_password') ||
+    searchParams.has('forget_password') ||
+    searchParams.has('reset_password')
+  ) {
+    return '/forgot-password';
+  }
+  if (searchParams.has('profile') || searchParams.has('student_profile')) {
+    return '/profile';
+  }
 
   // 3. Standard pathname
   return normalizePath(window.location.pathname);

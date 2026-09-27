@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from '../context/RouterContext';
 import { Navbar } from '../components/common/Navbar';
 import { Footer } from '../components/common/Footer';
-import { FileQuestion, ArrowLeft, Home, Compass } from 'lucide-react';
+import { FileQuestion, ArrowLeft, Home, Compass, KeyRound, LogIn, User } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {
   const { navigate } = useRouter();
@@ -58,6 +58,42 @@ export const NotFoundPage: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
               <span>Go Back</span>
             </button>
+          </div>
+
+          {/* Quick Helpful Pathways */}
+          <div className="mt-8 pt-6 border-t border-slate-800 text-left">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">
+              Quick Examination Pathways
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <button
+                type="button"
+                id="btn_404_to_login"
+                onClick={() => navigate('/login')}
+                className="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 transition font-medium"
+              >
+                <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Student Login</span>
+              </button>
+              <button
+                type="button"
+                id="btn_404_to_forgot"
+                onClick={() => navigate('/forgot-password')}
+                className="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 transition font-medium"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                <span>Forgot Password</span>
+              </button>
+              <button
+                type="button"
+                id="btn_404_to_profile"
+                onClick={() => navigate('/profile')}
+                className="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 transition font-medium"
+              >
+                <User className="w-3.5 h-3.5 text-sky-400" />
+                <span>Student Profile</span>
+              </button>
+            </div>
           </div>
         </div>
       </main>

@@ -12,6 +12,7 @@ import { CandidateLoginPage } from './pages/CandidateLoginPage';
 import { AdminLoginPage } from './pages/AdminLoginPage';
 import { CandidateDashboardPage } from './pages/CandidateDashboardPage';
 import { CandidateCoursesPage } from './pages/CandidateCoursesPage';
+import { CandidateProfilePage } from './pages/CandidateProfilePage';
 import { ExamInstructionsPage } from './pages/ExamInstructionsPage';
 import { TakeExamPage } from './pages/TakeExamPage';
 import { ExamSubmittedPage } from './pages/ExamSubmittedPage';
@@ -26,6 +27,7 @@ import { AdminSecurityMonitoringPage } from './pages/AdminSecurityMonitoringPage
 import { ParentLoginPage } from './pages/ParentLoginPage';
 import { ParentRegisterPage } from './pages/ParentRegisterPage';
 import { ParentDashboardPage } from './pages/ParentDashboardPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 const AppRoutes: React.FC = () => {
@@ -65,6 +67,29 @@ const AppRoutes: React.FC = () => {
     return <CandidateLoginPage />;
   }
 
+  // 3.1 Candidate / Student Forgot Password & Reset Credentials
+  if (
+    currentPath === '/forgot-password' ||
+    currentPath === '/forget-password' ||
+    currentPath === '/forgot' ||
+    currentPath === '/forgotpassword' ||
+    currentPath === '/forgetpassword' ||
+    currentPath === '/reset-password' ||
+    currentPath === '/password-reset' ||
+    currentPath === '/student/forgot-password' ||
+    currentPath === '/student/forget-password' ||
+    currentPath === '/student/reset-password' ||
+    currentPath === '/student-forgot-password' ||
+    currentPath === '/student-forget-password' ||
+    currentPath === '/candidate/forgot-password' ||
+    currentPath === '/candidate/forget-password' ||
+    currentPath === '/candidate/reset-password' ||
+    currentPath === '/student/password/reset' ||
+    currentPath === '/student/password-reset'
+  ) {
+    return <ForgotPasswordPage />;
+  }
+
   // 4. Admin Login
   if (currentPath === '/admin/login' || currentPath === '/admin/signin' || currentPath === '/admin-login') {
     return <AdminLoginPage />;
@@ -84,6 +109,22 @@ const AppRoutes: React.FC = () => {
     return (
       <ProtectedRoute role="candidate" redirectTo="/login">
         <CandidateCoursesPage />
+      </ProtectedRoute>
+    );
+  }
+
+  // 5.2 Candidate / Student Profile & Security
+  if (
+    currentPath === '/profile' ||
+    currentPath === '/student/profile' ||
+    currentPath === '/candidate/profile' ||
+    currentPath === '/student-profile' ||
+    currentPath === '/candidate-profile' ||
+    currentPath === '/student'
+  ) {
+    return (
+      <ProtectedRoute role="candidate" redirectTo="/login">
+        <CandidateProfilePage />
       </ProtectedRoute>
     );
   }
@@ -143,7 +184,12 @@ const AppRoutes: React.FC = () => {
   }
 
   // 10.2 Admin Students Management & Candidate Results
-  if (currentPath === '/admin/students') {
+  if (
+    currentPath === '/admin/students' ||
+    Boolean(matchRoute('/admin/students/:studentId')) ||
+    Boolean(matchRoute('/admin/students/:studentId/profile')) ||
+    Boolean(matchRoute('/admin/student/:studentId'))
+  ) {
     return (
       <ProtectedRoute role="admin" redirectTo="/admin/login">
         <AdminStudentsPage />

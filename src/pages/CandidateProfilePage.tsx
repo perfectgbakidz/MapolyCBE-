@@ -221,6 +221,15 @@ export const CandidateProfilePage: React.FC = () => {
                   <p className="text-[11px] leading-normal text-amber-800/90">
                     Do not share your password with any other student. If you forget your password during an examination session, contact the Chief Invigilator or Examination Controller to perform an administrator password reset.
                   </p>
+                  <button
+                    type="button"
+                    id="profile_btn_request_reset"
+                    onClick={() => navigate('/forgot-password')}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-900 hover:text-amber-950 underline mt-1"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    Submit Reset Application to Admin
+                  </button>
                 </div>
               </div>
             </div>
@@ -267,12 +276,22 @@ export const CandidateProfilePage: React.FC = () => {
               <form onSubmit={handlePasswordChange} className="space-y-4" noValidate>
                 {/* Current Password */}
                 <div>
-                  <label
-                    htmlFor="profile_current_password"
-                    className="block text-xs font-bold text-stone-700 mb-1.5"
-                  >
-                    Current Password *
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label
+                      htmlFor="profile_current_password"
+                      className="block text-xs font-bold text-stone-700"
+                    >
+                      Current Password *
+                    </label>
+                    <button
+                      type="button"
+                      id="profile_link_forgot_password"
+                      onClick={() => navigate('/forgot-password')}
+                      className="text-xs font-bold text-emerald-800 hover:text-emerald-900 hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
